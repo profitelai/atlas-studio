@@ -121,18 +121,55 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
+// Turn a free-form PRD into a GitHub Spec Kit hand-off bundle: a constitution
+// plus the PRD as the /speckit-specify input, with the exact commands to run.
+function specKitBundle(prd, title) {
+  const date = new Date().toISOString().slice(0, 10);
+  const constitution = `# ${title} Constitution
+<!-- Save this block as .specify/memory/constitution.md -->
+
+_Ratified ${date} · every plan, task, and build inherits these._
+
+## Core Principles
+- MUST ship the smallest slice that proves the core hypothesis first (MVP).
+- MUST keep every goal measurable — a number, threshold, or concrete artifact; no vague targets.
+- MUST reuse an existing component before building a new one.
+- MUST NOT ship un-backed-up, unverified, or untested work.
+
+## Governance
+This constitution supersedes ad-hoc decisions. All PRs and agent builds verify compliance.`;
+  return `<!-- ATLAS STUDIO LIVE → GITHUB SPEC KIT HAND-OFF -->
+<!-- 1) uv tool install specify-cli --from git+https://github.com/github/spec-kit.git -->
+<!-- 2) specify init <project> --integration claude -->
+<!-- 3) Save the CONSTITUTION block below to .specify/memory/constitution.md -->
+<!-- 4) Run /speckit-specify and paste the SPEC block as its input -->
+<!-- 5) /speckit-clarify -> /speckit-plan -> /speckit-tasks -> /speckit-implement -->
+
+========================= FILE: .specify/memory/constitution.md =========================
+
+${constitution}
+
+========================= SPEC (input for /speckit-specify) =========================
+
+${prd}
+`;
+}
+
 // Save a finished PRD into the project's specs/ folder — the hand-off point to
 // the build pipeline (Spec Kit's /speckit.specify, Ralph, the atlas/ catalog).
 app.post('/api/save', (req, res) => {
   const content = (req.body?.content || '').trim();
   if (!content) return res.status(400).json({ error: 'nothing to save yet' });
-  const slug = String(req.body?.name || 'prd').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 50) || 'prd';
+  const title = (content.match(/^#\s+(.+)$/m)?.[1] || req.body?.name || 'Project').trim();
+  const slug = String(req.body?.name || title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 50) || 'prd';
   try {
     const dir = path.join(REPO_ROOT, 'specs');
     fs.mkdirSync(dir, { recursive: true });
-    const file = path.join(dir, `${slug}-prd.md`);
-    fs.writeFileSync(file, content, 'utf8');
-    res.json({ saved: path.relative(REPO_ROOT, file) });
+    const prdFile = path.join(dir, `${slug}-prd.md`);
+    const skFile = path.join(dir, `${slug}-speckit.md`);
+    fs.writeFileSync(prdFile, content, 'utf8');
+    fs.writeFileSync(skFile, specKitBundle(content, title), 'utf8');
+    res.json({ saved: path.relative(REPO_ROOT, prdFile), speckit: path.relative(REPO_ROOT, skFile) });
   } catch (err) {
     console.error(`[api/save] ${err?.message || err}`);
     res.status(200).json({ error: err?.message || 'could not save' });
