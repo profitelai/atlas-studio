@@ -35,6 +35,28 @@ A clone is only correct if **every** box below is present. Verify against this l
 1. Valid name + email → form replaced by success state; `onLead(payload)` receives `{name,email,phone,submittedAt}`.
 2. Invalid/empty email → inline error, submit blocked, `aria-invalid="true"`.
 
+## Verify (machine-checkable)
+
+Run `bin/verify-package.sh packages/lead-capture.md <clone-file>`. Each line is
+`label :: pattern` (ERE). A `!` prefix means the pattern MUST be absent.
+
+<!-- verify
+form-markup :: id="leadForm"
+success-block :: id="success"
+copy-slot-headline :: data-slot="headline"
+copy-slot-props :: data-slot="props"
+theme-dark :: prefers-color-scheme:dark
+theme-attr :: \[data-theme=
+validation-fn :: function validate\(
+email-check :: validEmail
+inline-error-aria :: aria-invalid
+aria-live :: aria-live=
+double-submit-guard :: submitting
+late-bound-hook :: window\.onLead
+no-external-script :: !<script[^>]+src=
+no-external-css :: !<link[^>]+href=
+-->
+
 ## Reuse
 
 Don't copy-by-eye — run [skills/apply-lead-capture.md](../skills/apply-lead-capture.md).
