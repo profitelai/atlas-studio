@@ -1,0 +1,242 @@
+<meta charset="utf-8">
+<title>Auth UI — sign in · create account · reset password</title>
+<!--
+  Atlas package: auth-ui — self-contained authentication UI (front-end only).
+  NO backend and NO external requests. Wire real auth by defining, any time
+  before submit: window.onSignIn / window.onSignUp / window.onResetPassword —
+  each receives a payload and returns a Promise (reject → error state shown).
+-->
+<style>
+  :root{
+    --bg:#FFFFFF; --card:#FFFFFF; --ink:#141a22; --muted:#5a6672; --line:#e2e7ec; --sunk:#f5f7f9;
+    --brand:#12897a; --brand-ink:#0b5f55; --danger:#c4453b; --ok:#12897a; --warn:#c07a1e;
+    --radius:12px; --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#0d1117; --card:#141b23; --ink:#e7ecf1; --muted:#93a0ad; --line:#28323c; --sunk:#0f161d; --brand:#2cc1ac; --brand-ink:#7fe6d6; --danger:#e8695e; --ok:#2cc1ac; --warn:#e0a44e; }
+  }
+  :root[data-theme="light"]{ --bg:#FFFFFF; --card:#FFFFFF; --ink:#141a22; --muted:#5a6672; --line:#e2e7ec; --sunk:#f5f7f9; --brand:#12897a; --brand-ink:#0b5f55; --danger:#c4453b; }
+  :root[data-theme="dark"]{ --bg:#0d1117; --card:#141b23; --ink:#e7ecf1; --muted:#93a0ad; --line:#28323c; --sunk:#0f161d; --brand:#2cc1ac; --brand-ink:#7fe6d6; --danger:#e8695e; }
+
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:26rem;margin:0 auto;padding:2.4rem 1.2rem 4rem;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:1.5rem 1.5rem 1.6rem;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+  .tabs{display:flex;gap:.3rem;margin-bottom:1.2rem;background:var(--sunk);border:1px solid var(--line);border-radius:100px;padding:.25rem;}
+  .tab{flex:1;border:0;background:transparent;color:var(--muted);border-radius:100px;padding:.5rem;font-size:.88rem;font-weight:600;cursor:pointer;font-family:inherit;}
+  .tab[aria-selected="true"]{background:var(--brand);color:#fff;}
+  h2{font-size:1.25rem;letter-spacing:-.01em;margin:0 0 .3rem;}
+  .lede{color:var(--muted);font-size:.9rem;margin:0 0 1.2rem;}
+  .field{margin-bottom:.9rem;}
+  .field label{display:block;font-size:.82rem;font-weight:600;margin-bottom:.3rem;}
+  .inputrow{position:relative;}
+  input{width:100%;background:var(--sunk);border:1px solid var(--line);border-radius:9px;padding:.65rem .75rem;color:var(--ink);font-size:.95rem;font-family:inherit;}
+  input:focus{outline:2px solid var(--brand);outline-offset:-1px;}
+  input[aria-invalid="true"]{border-color:var(--danger);}
+  .pw input{padding-right:3.2rem;}
+  .toggle{position:absolute;top:50%;right:.5rem;transform:translateY(-50%);border:0;background:transparent;color:var(--muted);font-size:.75rem;font-weight:700;cursor:pointer;padding:.3rem .4rem;font-family:inherit;}
+  .err{color:var(--danger);font-size:.78rem;margin-top:.25rem;min-height:1em;}
+  .strength{height:5px;border-radius:100px;background:var(--line);overflow:hidden;margin:.45rem 0 .2rem;}
+  .strength > i{display:block;height:100%;width:0;background:var(--danger);transition:width .2s,background .2s;}
+  .strength-label{font-size:.72rem;color:var(--muted);}
+  .btn{width:100%;border:0;background:var(--brand);color:#fff;border-radius:9px;padding:.72rem;font-size:.95rem;font-weight:700;cursor:pointer;font-family:inherit;margin-top:.3rem;}
+  .btn[disabled]{opacity:.6;cursor:default;}
+  .altlink{background:0;border:0;color:var(--brand-ink);font-size:.82rem;font-weight:600;cursor:pointer;padding:0;font-family:inherit;}
+  .row-between{display:flex;justify-content:space-between;align-items:center;margin-top:.2rem;}
+  .success{text-align:center;padding:1rem 0;}
+  .success .mark{width:3rem;height:3rem;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;font-size:1.4rem;margin:0 auto .7rem;}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+
+<main class="wrap">
+  <div class="card" id="authWidget" data-view="signin">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-view-link="signin" aria-selected="true">Sign in</button>
+      <button class="tab" role="tab" data-view-link="signup" aria-selected="false">Create account</button>
+    </div>
+
+    <!-- ===== SIGN IN ===== -->
+    <form class="view" id="signinForm" data-view="signin" novalidate>
+      <h2 data-slot="signin-title">Welcome back</h2>
+      <p class="lede" data-slot="signin-sub">Sign in to continue.</p>
+      <div class="field">
+        <label for="si-email">Email</label>
+        <input id="si-email" name="email" type="email" autocomplete="email" aria-invalid="false" aria-describedby="si-email-err">
+        <div class="err" id="si-email-err" aria-live="polite"></div>
+      </div>
+      <div class="field pw">
+        <label for="si-pw">Password</label>
+        <div class="inputrow">
+          <input id="si-pw" name="password" type="password" autocomplete="current-password" aria-invalid="false" aria-describedby="si-pw-err">
+          <button type="button" class="toggle" data-action="toggle-pw" data-target="si-pw" aria-label="Show password">Show</button>
+        </div>
+        <div class="err" id="si-pw-err" aria-live="polite"></div>
+      </div>
+      <div class="row-between">
+        <button type="button" class="altlink" data-view-link="reset">Forgot password?</button>
+      </div>
+      <button type="submit" class="btn" data-role="submit">Sign in</button>
+    </form>
+
+    <!-- ===== SIGN UP ===== -->
+    <form class="view" id="signupForm" data-view="signup" novalidate hidden>
+      <h2>Create your account</h2>
+      <p class="lede">Takes less than a minute.</p>
+      <div class="field">
+        <label for="su-name">Name</label>
+        <input id="su-name" name="name" type="text" autocomplete="name" aria-invalid="false" aria-describedby="su-name-err">
+        <div class="err" id="su-name-err" aria-live="polite"></div>
+      </div>
+      <div class="field">
+        <label for="su-email">Email</label>
+        <input id="su-email" name="email" type="email" autocomplete="email" aria-invalid="false" aria-describedby="su-email-err">
+        <div class="err" id="su-email-err" aria-live="polite"></div>
+      </div>
+      <div class="field pw">
+        <label for="su-pw">Password</label>
+        <div class="inputrow">
+          <input id="su-pw" name="password" type="password" autocomplete="new-password" aria-invalid="false" aria-describedby="su-pw-err">
+          <button type="button" class="toggle" data-action="toggle-pw" data-target="su-pw" aria-label="Show password">Show</button>
+        </div>
+        <div class="strength" data-role="strength"><i></i></div>
+        <div class="strength-label" data-role="strength-label" aria-live="polite">Use 8+ characters.</div>
+        <div class="err" id="su-pw-err" aria-live="polite"></div>
+      </div>
+      <div class="field pw">
+        <label for="su-pw2">Confirm password</label>
+        <div class="inputrow">
+          <input id="su-pw2" name="confirm" type="password" data-role="confirm" autocomplete="new-password" aria-invalid="false" aria-describedby="su-pw2-err">
+          <button type="button" class="toggle" data-action="toggle-pw" data-target="su-pw2" aria-label="Show password">Show</button>
+        </div>
+        <div class="err" id="su-pw2-err" aria-live="polite"></div>
+      </div>
+      <button type="submit" class="btn" data-role="submit">Create account</button>
+    </form>
+
+    <!-- ===== RESET ===== -->
+    <form class="view" id="resetForm" data-view="reset" novalidate hidden>
+      <h2>Reset your password</h2>
+      <p class="lede">We'll email you a reset link.</p>
+      <div class="field">
+        <label for="rs-email">Email</label>
+        <input id="rs-email" name="email" type="email" autocomplete="email" aria-invalid="false" aria-describedby="rs-email-err">
+        <div class="err" id="rs-email-err" aria-live="polite"></div>
+      </div>
+      <button type="submit" class="btn" data-role="submit">Send reset link</button>
+      <div class="row-between" style="justify-content:center;margin-top:.8rem;">
+        <button type="button" class="altlink" data-view-link="signin">← Back to sign in</button>
+      </div>
+    </form>
+
+    <!-- ===== SUCCESS ===== -->
+    <div class="view success" data-role="success" hidden>
+      <div class="mark">✓</div>
+      <h2 data-role="success-title">Done</h2>
+      <p class="lede" data-role="success-msg">You're all set.</p>
+      <button type="button" class="altlink" data-view-link="signin">Back to sign in</button>
+    </div>
+  </div>
+</main>
+
+<script>
+(function(){
+  var root=document.getElementById("authWidget");
+  var successEl=root.querySelector('[data-role="success"]');
+  var submitting=false;
+
+  function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+  function setErr(input, msg){
+    input.setAttribute("aria-invalid", msg?"true":"false");
+    var box=document.getElementById(input.getAttribute("aria-describedby"));
+    if(box) box.textContent=msg||"";
+    return !msg;
+  }
+  function showView(v){
+    root.setAttribute("data-view", v);
+    root.querySelectorAll("[data-view]").forEach(function(el){ el.hidden = el.getAttribute("data-view")!==v; });
+    successEl.hidden = true;
+    root.querySelectorAll("[data-view-link]").forEach(function(t){
+      if(t.getAttribute("role")==="tab") t.setAttribute("aria-selected", String(t.getAttribute("data-view-link")===v));
+    });
+  }
+  function score(pw){ var s=0; if(pw.length>=8)s++; if(/[A-Z]/.test(pw)&&/[a-z]/.test(pw))s++; if(/\d/.test(pw))s++; if(/[^A-Za-z0-9]/.test(pw))s++; return s; }
+  function updateStrength(pw){
+    var meter=root.querySelector('[data-role="strength"] > i');
+    var label=root.querySelector('[data-role="strength-label"]');
+    var s=score(pw), pct=[0,25,55,80,100][s];
+    var col=["var(--danger)","var(--danger)","var(--warn)","var(--brand)","var(--brand)"][s];
+    var txt=["Use 8+ characters.","Weak","Fair","Good","Strong"][s];
+    if(meter){ meter.style.width=pct+"%"; meter.style.background=col; }
+    if(label) label.textContent=pw?txt:"Use 8+ characters.";
+  }
+  function callHook(name, payload){
+    var fn=window[name];
+    if(typeof fn==="function"){ return Promise.resolve(fn(payload)); }
+    if(window.console) console.log("[auth-ui] "+name+" (no handler wired):", payload);
+    return Promise.resolve();
+  }
+  function done(title, msg){
+    root.querySelectorAll("[data-view]").forEach(function(el){ el.hidden=true; });
+    root.querySelector('[data-role="success-title"]').textContent=title;
+    root.querySelector('[data-role="success-msg"]').textContent=msg;
+    successEl.hidden=false;
+  }
+  function submit(form, hook, buildPayload, validate, success){
+    form.addEventListener("submit", function(e){
+      e.preventDefault();
+      if(submitting) return;
+      if(!validate()) return;
+      submitting=true;
+      var btn=form.querySelector('[data-role="submit"]'); if(btn){ btn.disabled=true; btn.dataset.label=btn.textContent; btn.textContent="Please wait…"; }
+      callHook(hook, buildPayload())
+        .then(function(){ success(); })
+        .catch(function(err){
+          var box=form.querySelector(".err"); if(box){ box.textContent=(err&&err.message)||"Something went wrong. Try again."; }
+        })
+        .finally(function(){ submitting=false; if(btn){ btn.disabled=false; btn.textContent=btn.dataset.label||"Submit"; } });
+    });
+  }
+
+  // view links / tabs
+  root.querySelectorAll("[data-view-link]").forEach(function(t){
+    t.addEventListener("click", function(){ showView(t.getAttribute("data-view-link")); });
+  });
+  // password toggles
+  root.querySelectorAll('[data-action="toggle-pw"]').forEach(function(b){
+    b.addEventListener("click", function(){
+      var inp=document.getElementById(b.getAttribute("data-target"));
+      if(!inp) return; var show=inp.type==="password"; inp.type=show?"text":"password";
+      b.textContent=show?"Hide":"Show"; b.setAttribute("aria-label",(show?"Hide":"Show")+" password");
+    });
+  });
+  // strength meter
+  var suPw=document.getElementById("su-pw");
+  if(suPw) suPw.addEventListener("input", function(){ updateStrength(suPw.value); });
+
+  // SIGN IN
+  submit(document.getElementById("signinForm"), "onSignIn",
+    function(){ return { email:document.getElementById("si-email").value.trim(), password:document.getElementById("si-pw").value }; },
+    function(){ var e=document.getElementById("si-email"), p=document.getElementById("si-pw");
+      var ok=setErr(e, validEmail(e.value.trim())?"":"Enter a valid email.");
+      ok = setErr(p, p.value?"":"Enter your password.") && ok; return ok; },
+    function(){ done("Signed in", "Welcome back."); });
+
+  // SIGN UP
+  submit(document.getElementById("signupForm"), "onSignUp",
+    function(){ return { name:document.getElementById("su-name").value.trim(), email:document.getElementById("su-email").value.trim(), password:document.getElementById("su-pw").value }; },
+    function(){ var n=document.getElementById("su-name"), e=document.getElementById("su-email"), p=document.getElementById("su-pw"), c=document.getElementById("su-pw2");
+      var ok=setErr(n, n.value.trim()?"":"Enter your name.");
+      ok = setErr(e, validEmail(e.value.trim())?"":"Enter a valid email.") && ok;
+      ok = setErr(p, p.value.length>=8?"":"At least 8 characters.") && ok;
+      ok = setErr(c, c.value===p.value && c.value?"":"Passwords don't match.") && ok; return ok; },
+    function(){ done("Account created", "Check your email to verify."); });
+
+  // RESET
+  submit(document.getElementById("resetForm"), "onResetPassword",
+    function(){ return { email:document.getElementById("rs-email").value.trim() }; },
+    function(){ var e=document.getElementById("rs-email"); return setErr(e, validEmail(e.value.trim())?"":"Enter a valid email."); },
+    function(){ done("Check your inbox", "If that email exists, a reset link is on its way."); });
+
+  showView("signin");
+})();
+</script>
