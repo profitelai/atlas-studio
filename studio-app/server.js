@@ -7,8 +7,10 @@ import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import fs from 'node:fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = path.resolve(__dirname, '..'); // the k3 repo (parent of studio-app)
 
 // A blank `KEY=` line (as shipped in .env.example) would otherwise shadow a
 // real credential and confuse detection — drop empties so detection is accurate.
@@ -116,6 +118,24 @@ app.post('/api/chat', async (req, res) => {
     console.error(`[api/chat] ${status}: ${msg}`);
     // 200 with an error field so the browser can render it inline
     res.status(200).json({ error: msg, status });
+  }
+});
+
+// Save a finished PRD into the project's specs/ folder — the hand-off point to
+// the build pipeline (Spec Kit's /speckit.specify, Ralph, the atlas/ catalog).
+app.post('/api/save', (req, res) => {
+  const content = (req.body?.content || '').trim();
+  if (!content) return res.status(400).json({ error: 'nothing to save yet' });
+  const slug = String(req.body?.name || 'prd').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 50) || 'prd';
+  try {
+    const dir = path.join(REPO_ROOT, 'specs');
+    fs.mkdirSync(dir, { recursive: true });
+    const file = path.join(dir, `${slug}-prd.md`);
+    fs.writeFileSync(file, content, 'utf8');
+    res.json({ saved: path.relative(REPO_ROOT, file) });
+  } catch (err) {
+    console.error(`[api/save] ${err?.message || err}`);
+    res.status(200).json({ error: err?.message || 'could not save' });
   }
 });
 

@@ -106,6 +106,7 @@
       <div class="prd-body" id="prd"><p class="prd-empty">Your PRD appears here once the interview has enough to draft it — or hit “Generate PRD” anytime.</p></div>
       <div class="prd-actions">
         <button class="btn" id="copyBtn" disabled>Copy</button>
+        <button class="btn" id="saveBtn" disabled title="Save into the project's specs/ folder — ready for /speckit.specify">Save to project</button>
         <button class="btn primary" id="dlBtn" disabled>Download .md</button>
         <span class="hint" id="prdHint"></span>
       </div>
@@ -234,7 +235,7 @@
   // ---- minimal markdown renderer for the PRD panel ----
   function renderPRD(md){
     prd.innerHTML = mdToHtml(md);
-    $('#copyBtn').disabled=false; $('#dlBtn').disabled=false;
+    $('#copyBtn').disabled=false; $('#dlBtn').disabled=false; $('#saveBtn').disabled=false;
     $('#prdHint').textContent='draft';
   }
   function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
@@ -279,6 +280,15 @@
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='prd.md'; a.click();
     setTimeout(()=>URL.revokeObjectURL(a.href),1000);
     $('#prdHint').textContent='downloaded ✓';
+  };
+  function prdTitle(){ const m = prdText.match(/^#\s+(.+)$/m); return (m ? m[1] : 'project').trim(); }
+  $('#saveBtn').onclick=async()=>{
+    $('#prdHint').textContent='saving…';
+    try{
+      const r = await fetch('/api/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:prdText, name:prdTitle()})});
+      const d = await r.json();
+      $('#prdHint').textContent = d.saved ? ('saved → '+d.saved) : ('⚠ '+(d.error||'save failed'));
+    }catch(e){ $('#prdHint').textContent='⚠ save failed — is the server running?'; }
   };
 
   $('#resetBtn').onclick=()=>{
