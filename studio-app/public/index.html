@@ -84,6 +84,7 @@
       <div class="brand"><span class="dot">🗺️</span> Atlas Studio <small>live · voice interviewer</small></div>
       <button class="btn" id="genBtn" title="Ask the AI to write the PRD now">Generate PRD ⤓</button>
       <button class="btn primary" id="voiceBtn" title="Toggle Atlas speaking its questions aloud">🔊 Voice</button>
+      <button class="btn" id="hfBtn" title="Hands-free: Atlas listens automatically after it finishes speaking, and sends what you say">🎧 Hands-free</button>
       <button class="btn" id="resetBtn">Restart</button>
       <div class="status" id="status"><span class="led"></span><span id="statusText">connecting…</span></div>
     </div>
@@ -122,6 +123,7 @@
   // ---- text-to-speech: Atlas talks its questions aloud (browser-native, no key) ----
   const synth = window.speechSynthesis;
   let voiceOn = !!synth;
+  let handsFree = false;
   if(!synth){ const b=$('#voiceBtn'); if(b) b.style.display='none'; }
   function pickVoice(){
     if(!synth) return null;
@@ -136,6 +138,7 @@
       const u = new SpeechSynthesisUtterance(text);
       const v = pickVoice(); if(v) u.voice = v;
       u.rate = 1.03; u.pitch = 1;
+      u.onend = () => { if (handsFree && !busy) startListen(true); };
       synth.speak(u);
     }catch(e){}
   }
@@ -261,22 +264,49 @@
     start();
   };
 
-  // ---- voice ----
+  // ---- voice input (you talk) + hands-free loop ----
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let rec=null;
-  if(!SR){ $('#micNote').textContent='voice n/a in this browser'; $('#micBtn').style.display='none'; }
-  $('#micBtn').onclick=()=>{
-    if(!SR) return;
-    if(rec){ try{rec.stop();}catch(e){} return; }
+  let rec = null;
+  if(!SR){
+    $('#micNote').textContent='voice input n/a in this browser';
+    $('#micBtn').style.display='none';
+    const hf=$('#hfBtn'); if(hf) hf.style.display='none';
+  }
+  function startListen(autoSend){
+    if(!SR || busy) return;
+    if(rec){ try{ rec.stop(); }catch(e){} return; } // tapping again cancels
     try{
-      rec=new SR(); rec.lang='en-US'; rec.interimResults=false; rec.maxAlternatives=1;
+      rec = new SR(); rec.lang='en-US'; rec.interimResults=false; rec.maxAlternatives=1;
       $('#micBtn').classList.add('rec');
-      rec.onresult=e=>{ const t=e.results[0][0].transcript; input.value=(input.value?input.value.replace(/\s+$/,'')+' ':'')+t; autosize(); };
-      rec.onerror=e=>{ $('#micNote').textContent = e.error==='not-allowed' ? 'mic blocked — allow it or type' : 'voice error — type instead'; };
-      rec.onend=()=>{ $('#micBtn').classList.remove('rec'); rec=null; };
+      $('#micNote').textContent = 'listening…';
+      rec.onresult = e => {
+        const t = e.results[0][0].transcript;
+        if(autoSend){ send(t); }
+        else { input.value = (input.value ? input.value.replace(/\s+$/,'')+' ' : '') + t; autosize(); }
+      };
+      rec.onerror = e => {
+        if(e.error==='not-allowed'){ setHandsFree(false); $('#micNote').textContent='mic blocked — allow it or type'; }
+        else { $('#micNote').textContent=''; }
+      };
+      rec.onend = () => { $('#micBtn').classList.remove('rec'); if($('#micNote').textContent==='listening…') $('#micNote').textContent=''; rec=null; };
       rec.start();
     }catch(e){ $('#micBtn').classList.remove('rec'); rec=null; }
-  };
+  }
+  $('#micBtn').onclick = () => startListen(handsFree); // manual tap: auto-send only if in hands-free
+
+  function setHandsFree(on){
+    handsFree = on;
+    const b = $('#hfBtn');
+    b.className = 'btn' + (handsFree ? ' primary' : '');
+    if(handsFree){                    // hands-free needs the voice on to drive the loop
+      voiceOn = true;
+      const vb = $('#voiceBtn'); if(vb){ vb.className='btn primary'; vb.textContent='🔊 Voice'; }
+      $('#micNote').textContent = 'hands-free on — Atlas will listen after it speaks';
+    } else {
+      $('#micNote').textContent = '';
+    }
+  }
+  $('#hfBtn').onclick = () => setHandsFree(!handsFree);
 
   // ---- kickoff ----
   function start(){
