@@ -96,6 +96,14 @@
   .opt.sel{background:var(--accent-soft);border-color:var(--accent);color:var(--ink);font-weight:600;}
   .opt.sel::before{content:"✓ ";color:var(--accent);}
 
+  .stylerow{display:flex;flex-wrap:wrap;gap:.45rem;}
+  .stylelabel{font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 .45rem;display:flex;align-items:center;gap:.4rem;}
+  .stylechip{border:1px solid var(--line);background:var(--sunk);border-radius:100px;padding:.34rem .7rem .34rem .45rem;font-size:.82rem;color:var(--ink-soft);display:inline-flex;align-items:center;gap:.45rem;user-select:none;}
+  .stylechip:hover{border-color:var(--accent);}
+  .stylechip.sel{background:var(--accent-soft);border-color:var(--accent);color:var(--ink);font-weight:600;}
+  .stylechip .mini-sw{display:inline-flex;gap:2px;}
+  .stylechip .mini-sw i{width:11px;height:11px;border-radius:3px;display:inline-block;border:1px solid rgba(0,0,0,.08);}
+
   .nav{display:flex;justify-content:space-between;gap:.7rem;margin-top:1.3rem;padding-top:1rem;border-top:1px solid var(--line);}
 
   .tasks{display:flex;flex-direction:column;gap:.55rem;margin-top:.4rem;}
@@ -188,6 +196,16 @@
     {v:"api",l:"API / service"},{v:"automation",l:"Automation / agent"}
   ];
   const typeLabel=v=>(TYPES.find(t=>t.v===v)||{}).l||v;
+
+  // design-library styles (mirrors atlas-design-library.html) — picking one fills the visual direction
+  const STYLES=[
+    {id:"edit",name:"Editorial",sw:["#FFFFFF","#121212","#C1272D"],summary:"Editorial style — palette #FFFFFF bg / #121212 ink / #C1272D accent; serif display (Georgia/Iowan), system-sans body; radius 2px. Newspaper feel: big serif headlines, hairline rules, black-and-white with one red."},
+    {id:"brut",name:"Brutalist",sw:["#F3F3EC","#0A0A0A","#2B2BFF"],summary:"Brutalist style — palette #F3F3EC bg / #0A0A0A ink / #2B2BFF accent; monospace throughout; radius 0; hard 2px black borders with 3px offset shadows. Loud, honest, grid-forward."},
+    {id:"glass",name:"Soft Glass",sw:["#E9F6F1","#12A594","#7B4DFF"],summary:"Soft Glass style — mint→lilac gradient bg / #17212F ink / #12A594 teal accent; system sans; radius 16px, pill buttons; frosted translucent cards with blur. Calm and modern."},
+    {id:"corp",name:"Corporate",sw:["#FFFFFF","#0F1B2D","#1E5EFF"],summary:"Corporate Trust style — #FFFFFF bg / #0F1B2D navy ink / #1E5EFF blue accent; system sans; radius 10px; soft shadows, tinted cards. Clean, dependable, professional."},
+    {id:"lux",name:"Luxury",sw:["#131109","#C6A15B","#EDE7D8"],summary:"Luxury Dark style — #131109 warm near-black bg / #EDE7D8 text / #C6A15B champagne-gold accent; light serif display; radius 3px; thin gold lines, generous space. Quiet expense."},
+    {id:"play",name:"Playful",sw:["#7B4DFF","#FF5C8A","#F2B33D"],summary:"Playful Vibrant style — #FFFCF6 cream bg / #221833 ink / accents #7B4DFF purple, #FF5C8A pink, #F2B33D amber; system sans; radius 20px, chunky pill buttons with drop shadow. Friendly and fun."},
+  ];
 
   // ---------- PRD interview sections ----------
   const PRD_SECTIONS = [
@@ -303,7 +321,7 @@
           {id:"ui_states", q:"Empty, loading, error & success states", type:"long", help:"The states most builds forget — name them now."},
           {id:"device_targets", q:"Target devices & OS versions", type:"long", showForType:["mobile"], help:"iPhone/Android sizes, min OS, tablets?"},
           {id:"mobile_native", q:"Gestures, offline behaviour & push notifications", type:"long", showForType:["mobile"], help:"Swipe/long-press, what works offline, when it notifies."},
-          {id:"visual_dir", q:"Visual direction & references", type:"long", help:"Brand, a product you admire, or a prompt for v0.dev / Figma."},
+          {id:"visual_dir", q:"Visual direction & references", type:"stylepick", help:"Pick a starting style from the Design Library (or describe your own) — it seeds the build's look."},
           {id:"a11y_resp", q:"Accessibility & responsive needs", type:"long", help:"Mobile-first? Keyboard? Contrast?"},
         ]}]},
     { id:"mvp", name:"MVP", kind:"interview", short:"smallest slice",
@@ -426,7 +444,7 @@
 
   // ---------- state ----------
   const KEY = "atlas-studio-v2";
-  let state = { proj:"", ptype:"website", stage:"prd", sec:{}, answers:{}, tasks:null, checks:{}, notes:{}, _tid:1 };
+  let state = { proj:"", ptype:"website", stage:"prd", sec:{}, answers:{}, tasks:null, checks:{}, notes:{}, style:"", _tid:1 };
   try { const s=JSON.parse(localStorage.getItem(KEY)||"null"); if(s) state=Object.assign(state,s); } catch(e){}
   if(!state.tasks){ state.tasks = stageById("building").seed.map(t=>({id:state._tid++, title:t.title, prio:t.prio, done:false})); }
 
@@ -480,6 +498,11 @@
   // ---------- interview ----------
   function fieldHTML(q){
     const v=state.answers[q.id];
+    if(q.type==="stylepick"){
+      const chips=STYLES.map(s=>`<span class="stylechip${state.style===s.id?' sel':''}" data-style="${s.id}"><span class="mini-sw">${s.sw.map(c=>`<i style="background:${c}"></i>`).join("")}</span>${esc(s.name)}</span>`).join("");
+      return `<div class="stylelabel">🎨 Design Library — pick a starting look</div><div class="stylerow" style="margin-bottom:.7rem">${chips}</div>`+
+        `<div class="q-field with-mic"><textarea class="q-in" data-qid="${q.id}" placeholder="Pick a style above, or describe your own direction…">${esc(v||"")}</textarea><button class="mic" data-mic="${q.id}" title="Speak your answer" aria-label="Speak your answer">🎤</button></div>`;
+    }
     if(q.type==="single"||q.type==="multi"){
       const sel=q.type==="multi"?(Array.isArray(v)?v:[]):(v?[v]:[]);
       return `<div class="opts" data-qid="${q.id}" data-multi="${q.type==="multi"}">`+
@@ -514,6 +537,12 @@
         else state.answers[qid]=state.answers[qid]===val?"":val;
         save();renderInterview(st);renderStageBar();renderPreview();renderProgress();
       });
+    });
+    p.querySelectorAll(".stylechip").forEach(c=>c.onclick=()=>{
+      const s=STYLES.find(x=>x.id===c.dataset.style);
+      state.style = state.style===s.id ? "" : s.id;
+      state.answers.visual_dir = state.style ? s.summary : "";
+      save();renderInterview(st);renderStageBar();renderPreview();renderProgress();
     });
     p.querySelectorAll(".mic").forEach(m=>m.onclick=()=>startVoice(m.dataset.mic,m,()=>renderInterview(st)));
     const b=$("#secBack"); if(b) b.onclick=()=>{state.sec[st.id]=idx-1;save();renderInterview(st);};
@@ -698,7 +727,7 @@
   $("#dlBtn").onclick=downloadDoc;
   $("#copyBtn").onclick=()=>copyMD();
   $("#resetBtn").onclick=()=>{ if(!confirm("Clear everything and start fresh?"))return;
-    state={proj:"",ptype:"website",stage:"prd",sec:{},answers:{},tasks:null,checks:{},notes:{},_tid:1};
+    state={proj:"",ptype:"website",stage:"prd",sec:{},answers:{},tasks:null,checks:{},notes:{},style:"",_tid:1};
     state.tasks=stageById("building").seed.map(t=>({id:state._tid++,title:t.title,prio:t.prio,done:false}));
     try{localStorage.removeItem(KEY);}catch(e){} $("#projName").value=""; render(); toast("Started fresh.");
   };
