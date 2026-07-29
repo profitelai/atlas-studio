@@ -1,0 +1,15 @@
+{
+  "name": "atlas-studio-live",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local live-AI PRD interviewer — the AI asks adaptive questions and drafts the PRD. Runs on your machine.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}

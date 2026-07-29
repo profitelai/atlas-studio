@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atlas Studio Live — voice PRD interviewer</title>
+<style>
+  :root{
+    --paper:#F4F7F9; --surface:#FFFFFF; --surface-2:#EDF1F4; --sunk:#F7F9FB;
+    --ink:#0F1620; --ink-soft:#3C4854; --ink-faint:#6C7986; --line:#DBE2E8;
+    --accent:#12897A; --accent-deep:#0B5F55; --accent-soft:#E3F1EE; --danger:#C4453B;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace; --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --paper:#0C1116; --surface:#141B22; --surface-2:#1B242D; --sunk:#10161C;
+    --ink:#E7ECF1; --ink-soft:#B3BEC9; --ink-faint:#7B8894; --line:#28323C;
+    --accent:#2CC1AC; --accent-deep:#7FE6D6; --accent-soft:#12312D; --danger:#E8695E;
+  }}
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;}
+  button,input,textarea{font-family:inherit;}
+
+  header{flex:none;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--surface) 92%,transparent);}
+  .head-in{max-width:1200px;margin:0 auto;padding:.7rem 1.1rem;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:.55rem;font-weight:700;letter-spacing:-.01em;}
+  .brand .dot{width:24px;height:24px;border-radius:7px;background:var(--accent);display:grid;place-items:center;font-size:.9rem;}
+  .brand small{font-weight:500;color:var(--ink-faint);font-size:.72rem;}
+  .status{margin-left:auto;font-family:var(--mono);font-size:.7rem;color:var(--ink-faint);display:flex;align-items:center;gap:.4rem;}
+  .status .led{width:8px;height:8px;border-radius:50%;background:var(--ink-faint);}
+  .status.ok .led{background:var(--accent);}
+  .status.bad .led{background:var(--danger);}
+  .btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:.45rem .7rem;font-size:.82rem;font-weight:600;cursor:pointer;display:inline-flex;gap:.4rem;align-items:center;}
+  .btn:hover{border-color:var(--accent);}
+  .btn.primary{background:var(--accent);color:#062019;border-color:var(--accent);}
+  .btn:disabled{opacity:.5;cursor:default;}
+
+  .main{flex:1;min-height:0;max-width:1200px;width:100%;margin:0 auto;padding:1rem 1.1rem;display:grid;grid-template-columns:1fr 420px;gap:1.1rem;}
+  @media (max-width:900px){.main{grid-template-columns:1fr;}}
+
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+  .panel-head{flex:none;padding:.6rem .9rem;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);display:flex;align-items:center;gap:.5rem;}
+
+  /* chat */
+  .chat{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.8rem;}
+  .msg{max-width:88%;padding:.65rem .85rem;border-radius:12px;font-size:.94rem;white-space:pre-wrap;word-wrap:break-word;}
+  .msg.a{align-self:flex-start;background:var(--surface-2);border:1px solid var(--line);border-bottom-left-radius:4px;}
+  .msg.u{align-self:flex-end;background:var(--accent);color:#062019;border-bottom-right-radius:4px;}
+  .msg.sys{align-self:center;background:transparent;border:1px dashed var(--line);color:var(--ink-faint);font-size:.82rem;font-family:var(--mono);}
+  .msg.err{align-self:center;background:color-mix(in srgb,var(--danger) 12%,transparent);border:1px solid color-mix(in srgb,var(--danger) 40%,var(--line));color:var(--danger);font-size:.85rem;}
+  .typing{align-self:flex-start;color:var(--ink-faint);font-size:.85rem;display:flex;gap:.3rem;align-items:center;}
+  .typing i{width:6px;height:6px;border-radius:50%;background:var(--ink-faint);animation:blink 1.2s infinite;}
+  .typing i:nth-child(2){animation-delay:.2s;} .typing i:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{0%,60%,100%{opacity:.3;}30%{opacity:1;}}
+
+  .composer{flex:none;border-top:1px solid var(--line);padding:.7rem;display:flex;gap:.5rem;align-items:flex-end;}
+  .composer textarea{flex:1;resize:none;background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:.6rem .75rem;color:var(--ink);font-size:.94rem;max-height:8rem;min-height:2.6rem;}
+  .composer textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;}
+  .mic{width:2.6rem;height:2.6rem;flex:none;border-radius:10px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;font-size:1.05rem;cursor:pointer;}
+  .mic:hover{border-color:var(--accent);}
+  .mic.rec{background:var(--danger);border-color:var(--danger);color:#fff;animation:pulse 1s infinite;}
+  @keyframes pulse{50%{opacity:.55;}}
+  .send{height:2.6rem;}
+
+  /* prd */
+  .prd-body{flex:1;overflow-y:auto;padding:1.1rem 1.2rem;font-size:.9rem;}
+  .prd-empty{color:var(--ink-faint);font-style:italic;}
+  .prd-body h1{font-size:1.2rem;margin:.2rem 0 .5rem;letter-spacing:-.01em;}
+  .prd-body h2{font-size:1rem;margin:1.1rem 0 .35rem;color:var(--accent-deep);}
+  .prd-body h3{font-size:.9rem;margin:.8rem 0 .3rem;}
+  .prd-body p{margin:.35rem 0;color:var(--ink-soft);}
+  .prd-body ul{margin:.35rem 0;padding-left:1.2rem;color:var(--ink-soft);}
+  .prd-body li{margin:.15rem 0;}
+  .prd-body code{font-family:var(--mono);font-size:.85em;background:var(--surface-2);padding:.05rem .3rem;border-radius:4px;}
+  .prd-body strong{color:var(--ink);}
+  .prd-actions{flex:none;border-top:1px solid var(--line);padding:.6rem .8rem;display:flex;gap:.5rem;}
+  .hint{font-size:.72rem;color:var(--ink-faint);margin-left:auto;align-self:center;}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;}}
+</style>
+</head>
+<body>
+  <header>
+    <div class="head-in">
+      <div class="brand"><span class="dot">🗺️</span> Atlas Studio <small>live · voice interviewer</small></div>
+      <button class="btn" id="genBtn" title="Ask the AI to write the PRD now">Generate PRD ⤓</button>
+      <button class="btn primary" id="voiceBtn" title="Toggle Atlas speaking its questions aloud">🔊 Voice</button>
+      <button class="btn" id="resetBtn">Restart</button>
+      <div class="status" id="status"><span class="led"></span><span id="statusText">connecting…</span></div>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="panel">
+      <div class="panel-head">Interview <span id="micNote" style="margin-left:auto;text-transform:none;letter-spacing:0;"></span></div>
+      <div class="chat" id="chat"></div>
+      <div class="composer">
+        <button class="mic" id="micBtn" title="Speak your answer" aria-label="Speak your answer">🎤</button>
+        <textarea id="input" rows="1" placeholder="Type your answer, or tap the mic to speak…"></textarea>
+        <button class="btn primary send" id="sendBtn">Send</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">Live PRD</div>
+      <div class="prd-body" id="prd"><p class="prd-empty">Your PRD appears here once the interview has enough to draft it — or hit “Generate PRD” anytime.</p></div>
+      <div class="prd-actions">
+        <button class="btn" id="copyBtn" disabled>Copy</button>
+        <button class="btn primary" id="dlBtn" disabled>Download .md</button>
+        <span class="hint" id="prdHint"></span>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const chat = $('#chat'), input = $('#input'), prd = $('#prd');
+  let messages = [];        // {role, content}
+  let busy = false;
+  let prdText = '';
+
+  // ---- text-to-speech: Atlas talks its questions aloud (browser-native, no key) ----
+  const synth = window.speechSynthesis;
+  let voiceOn = !!synth;
+  if(!synth){ const b=$('#voiceBtn'); if(b) b.style.display='none'; }
+  function pickVoice(){
+    if(!synth) return null;
+    const vs = synth.getVoices();
+    return vs.find(v=>/^en/i.test(v.lang) && /(samantha|jenny|aria|zira|google.*english|female)/i.test(v.name))
+        || vs.find(v=>/^en/i.test(v.lang)) || vs[0] || null;
+  }
+  function speak(text){
+    if(!voiceOn || !synth || !text) return;
+    try{
+      synth.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      const v = pickVoice(); if(v) u.voice = v;
+      u.rate = 1.03; u.pitch = 1;
+      synth.speak(u);
+    }catch(e){}
+  }
+  function stopSpeak(){ if(synth){ try{ synth.cancel(); }catch(e){} } }
+  if(synth && synth.onvoiceschanged === null){ synth.onvoiceschanged = ()=>{}; }
+  $('#voiceBtn').onclick = ()=>{
+    voiceOn = !voiceOn;
+    if(!voiceOn) stopSpeak();
+    const b = $('#voiceBtn');
+    b.className = 'btn' + (voiceOn ? ' primary' : '');
+    b.textContent = voiceOn ? '🔊 Voice' : '🔇 Muted';
+  };
+
+  // ---- health ----
+  fetch('/api/health').then(r=>r.json()).then(h=>{
+    const el = $('#status'), t = $('#statusText');
+    if(h.keyPresent){ el.className='status ok'; t.textContent = h.model+' · key ✓'; }
+    else { el.className='status ok'; t.textContent = h.model+' · using CLI profile'; }
+  }).catch(()=>{ $('#status').className='status bad'; $('#statusText').textContent='server offline'; });
+
+  // ---- chat rendering ----
+  function bubble(role, text){
+    const d=document.createElement('div'); d.className='msg '+role; d.textContent=text; chat.appendChild(d);
+    chat.scrollTop=chat.scrollHeight; return d;
+  }
+  function typing(){
+    const d=document.createElement('div'); d.className='typing'; d.innerHTML='Atlas is thinking <i></i><i></i><i></i>';
+    chat.appendChild(d); chat.scrollTop=chat.scrollHeight; return d;
+  }
+
+  async function callAPI(){
+    const t = typing(); busy=true; setBusy(true);
+    try{
+      const r = await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages})});
+      const data = await r.json();
+      t.remove();
+      if(data.error){ bubble('err','⚠ '+data.error); return; }
+      let text = data.text || '';
+      // extract a <prd>...</prd> block if present
+      const m = text.match(/<prd>([\s\S]*?)<\/prd>/i);
+      if(m){
+        prdText = m[1].trim();
+        renderPRD(prdText);
+        text = text.replace(/<prd>[\s\S]*?<\/prd>/i,'').trim();
+        if(!text) text = '✅ PRD drafted — see the Live PRD panel. You can keep refining, or download it.';
+      }
+      messages.push({role:'assistant', content:data.text || text});
+      if(text){ bubble('a', text); speak(text); }
+    }catch(e){
+      t.remove(); bubble('err','⚠ Network error — is the server still running?');
+    }finally{ busy=false; setBusy(false); input.focus(); }
+  }
+
+  function setBusy(b){ $('#sendBtn').disabled=b; $('#genBtn').disabled=b; }
+
+  function send(userText){
+    if(busy) return;
+    userText = (userText||'').trim();
+    if(!userText) return;
+    stopSpeak();
+    bubble('u', userText);
+    messages.push({role:'user', content:userText});
+    input.value=''; autosize();
+    callAPI();
+  }
+
+  // ---- minimal markdown renderer for the PRD panel ----
+  function renderPRD(md){
+    prd.innerHTML = mdToHtml(md);
+    $('#copyBtn').disabled=false; $('#dlBtn').disabled=false;
+    $('#prdHint').textContent='draft';
+  }
+  function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+  function inline(s){
+    return esc(s)
+      .replace(/`([^`]+)`/g,'<code>$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+      .replace(/(?<!\*)\*(?!\s)([^*]+?)\*/g,'<em>$1</em>');
+  }
+  function mdToHtml(md){
+    const lines = md.split(/\r?\n/); let html=''; let inList=false;
+    const closeList=()=>{ if(inList){ html+='</ul>'; inList=false; } };
+    for(let raw of lines){
+      const line = raw.replace(/\s+$/,'');
+      if(/^\s*[-*]\s+/.test(line)){
+        if(!inList){ html+='<ul>'; inList=true; }
+        html+='<li>'+inline(line.replace(/^\s*[-*]\s+/,''))+'</li>'; continue;
+      }
+      closeList();
+      if(/^#{1,6}\s/.test(line)){
+        const lvl=Math.min(line.match(/^#+/)[0].length,3);
+        html+='<h'+lvl+'>'+inline(line.replace(/^#{1,6}\s/,''))+'</h'+lvl+'>'; continue;
+      }
+      if(line.trim()==='') { continue; }
+      html+='<p>'+inline(line)+'</p>';
+    }
+    closeList();
+    return html;
+  }
+
+  // ---- actions ----
+  $('#sendBtn').onclick=()=>send(input.value);
+  input.addEventListener('keydown',e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(input.value); } });
+  function autosize(){ input.style.height='auto'; input.style.height=Math.min(input.scrollHeight,128)+'px'; }
+  input.addEventListener('input',autosize);
+
+  $('#genBtn').onclick=()=>{ if(!busy) send('Please generate the full PRD now from everything so far.'); };
+
+  $('#copyBtn').onclick=async()=>{ try{ await navigator.clipboard.writeText(prdText); $('#prdHint').textContent='copied ✓'; }catch(e){ $('#prdHint').textContent='copy blocked — select the text'; } };
+  $('#dlBtn').onclick=()=>{
+    const blob=new Blob([prdText],{type:'text/markdown'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='prd.md'; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    $('#prdHint').textContent='downloaded ✓';
+  };
+
+  $('#resetBtn').onclick=()=>{
+    if(!confirm('Restart the interview? The current PRD draft will be cleared.')) return;
+    stopSpeak();
+    messages=[]; prdText=''; chat.innerHTML='';
+    prd.innerHTML='<p class="prd-empty">Your PRD appears here once the interview has enough to draft it — or hit “Generate PRD” anytime.</p>';
+    $('#copyBtn').disabled=true; $('#dlBtn').disabled=true; $('#prdHint').textContent='';
+    start();
+  };
+
+  // ---- voice ----
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let rec=null;
+  if(!SR){ $('#micNote').textContent='voice n/a in this browser'; $('#micBtn').style.display='none'; }
+  $('#micBtn').onclick=()=>{
+    if(!SR) return;
+    if(rec){ try{rec.stop();}catch(e){} return; }
+    try{
+      rec=new SR(); rec.lang='en-US'; rec.interimResults=false; rec.maxAlternatives=1;
+      $('#micBtn').classList.add('rec');
+      rec.onresult=e=>{ const t=e.results[0][0].transcript; input.value=(input.value?input.value.replace(/\s+$/,'')+' ':'')+t; autosize(); };
+      rec.onerror=e=>{ $('#micNote').textContent = e.error==='not-allowed' ? 'mic blocked — allow it or type' : 'voice error — type instead'; };
+      rec.onend=()=>{ $('#micBtn').classList.remove('rec'); rec=null; };
+      rec.start();
+    }catch(e){ $('#micBtn').classList.remove('rec'); rec=null; }
+  };
+
+  // ---- kickoff ----
+  function start(){
+    messages.push({role:'user', content:'Hi — I want to build something. Greet me briefly and ask your first question to start the interview.'});
+    callAPI();
+  }
+  start();
+})();
+</script>
+</body>
+</html>
