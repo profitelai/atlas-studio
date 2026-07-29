@@ -196,27 +196,50 @@
     chat.appendChild(d); chat.scrollTop=chat.scrollHeight; return d;
   }
 
+  // hide a (possibly partial) <prd> block from the chat bubble while streaming
+  function stripPrd(s){
+    return s.replace(/<prd>[\s\S]*?<\/prd>/i,'').replace(/<prd>[\s\S]*$/i,'').trim();
+  }
   async function callAPI(){
     const t = typing(); busy=true; setBusy(true);
+    let dv = null;
     try{
       const r = await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages})});
-      const data = await r.json();
-      t.remove();
-      if(data.error){ bubble('err','⚠ '+data.error); return; }
-      let text = data.text || '';
-      // extract a <prd>...</prd> block if present
-      const m = text.match(/<prd>([\s\S]*?)<\/prd>/i);
-      if(m){
-        prdText = m[1].trim();
-        renderPRD(prdText);
-        text = text.replace(/<prd>[\s\S]*?<\/prd>/i,'').trim();
-        if(!text) text = '✅ PRD drafted — see the Live PRD panel. You can keep refining, or download it.';
+      const ct = r.headers.get('content-type') || '';
+      if(ct.includes('application/json')){                 // error path
+        const data = await r.json(); t.remove();
+        bubble('err','⚠ '+(data.error || 'request failed')); return;
       }
-      messages.push({role:'assistant', content:data.text || text});
-      if(text){ bubble('a', text); speak(text); }
+      if(!r.body || !r.body.getReader){                    // no stream support → read whole body
+        const full = await r.text(); t.remove(); dv = bubble('a',''); finalizeAssistant(dv, full); return;
+      }
+      t.remove(); dv = bubble('a','');                     // empty bubble we fill as tokens arrive
+      const reader = r.body.getReader(); const dec = new TextDecoder();
+      let full = '';
+      for(;;){
+        const { value, done } = await reader.read();
+        if(done) break;
+        full += dec.decode(value, {stream:true});
+        dv.textContent = stripPrd(full);
+        chat.scrollTop = chat.scrollHeight;
+      }
+      finalizeAssistant(dv, full);
     }catch(e){
-      t.remove(); bubble('err','⚠ Network error — is the server still running?');
+      if(t.parentNode) t.remove();
+      bubble('err','⚠ Network error — is the server still running?');
     }finally{ busy=false; setBusy(false); input.focus(); }
+  }
+  function finalizeAssistant(dv, full){
+    let text = full;
+    const m = full.match(/<prd>([\s\S]*?)<\/prd>/i);
+    if(m){
+      prdText = m[1].trim(); renderPRD(prdText);
+      text = full.replace(/<prd>[\s\S]*?<\/prd>/i,'').trim();
+      if(!text) text = '✅ PRD drafted — see the Live PRD panel. Keep refining, or download it.';
+    }
+    if(dv) dv.textContent = text || '…';
+    messages.push({role:'assistant', content: full});
+    if(text) speak(text);
   }
 
   function setBusy(b){ $('#sendBtn').disabled=b; $('#genBtn').disabled=b; }

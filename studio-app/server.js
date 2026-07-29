@@ -105,8 +105,26 @@ app.post('/api/chat', async (req, res) => {
     return res.status(400).json({ error: 'messages[] is required' });
   }
   try {
-    const text = await ask(messages);
-    res.json({ text });
+    if (PROVIDER === 'openai') {
+      const stream = await getOpenAI().chat.completions.create({
+        model: OPENAI_MODEL, stream: true,
+        messages: [{ role: 'system', content: SYSTEM }, ...messages],
+      });
+      res.set('Content-Type', 'text/plain; charset=utf-8');
+      for await (const chunk of stream) {
+        const t = chunk.choices?.[0]?.delta?.content || '';
+        if (t) res.write(t);
+      }
+      res.end();
+    } else {
+      const stream = getAnthropic().messages.stream({
+        model: ANTHROPIC_MODEL, max_tokens: 4096, system: SYSTEM, messages,
+      });
+      res.set('Content-Type', 'text/plain; charset=utf-8');
+      stream.on('text', (t) => res.write(t));
+      await stream.finalMessage();
+      res.end();
+    }
   } catch (err) {
     const status = err?.status || 500;
     let msg = err?.error?.error?.message || err?.error?.message || err?.message || 'request failed';
@@ -116,8 +134,9 @@ app.post('/api/chat', async (req, res) => {
       msg += ` — check that ${KEY_NAME} in studio-app/.env is a valid key, then restart.`;
     }
     console.error(`[api/chat] ${status}: ${msg}`);
-    // 200 with an error field so the browser can render it inline
-    res.status(200).json({ error: msg, status });
+    // If we already started streaming, just end; otherwise send a JSON error the UI can show.
+    if (res.headersSent) { try { res.end(); } catch (e) {} }
+    else res.status(200).json({ error: msg, status });
   }
 });
 
