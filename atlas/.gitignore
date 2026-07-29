@@ -1,0 +1,6 @@
+# Discovery output contains LIVE server details (domains, DBs, cron, IPs).
+# Never commit these to a public repo — keep them local or in a PRIVATE store.
+/inventory/*
+!/inventory/.gitkeep
+/INDEX.md
+/packages/CATALOG.md

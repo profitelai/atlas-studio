@@ -160,6 +160,7 @@
       <span class="saved" id="savedTag">saved</span>
       <button class="btn ghost small" id="resetBtn">Reset</button>
       <button class="btn small" id="copyBtn">Copy</button>
+      <button class="btn small" id="speckitBtn" title="Export as GitHub Spec Kit constitution + spec, ready for /speckit-specify">Spec Kit ⤓</button>
       <button class="btn primary small" id="dlBtn">Download</button>
     </div>
   </div>
@@ -683,6 +684,115 @@
   }
   async function copyMD(md,msg){ md=md||buildMarkdown(); try{await navigator.clipboard.writeText(md);toast(msg||"Copied to clipboard.");}catch(e){toast("Couldn't copy — select the Live spec text.",true);} }
 
+  // ---------- GitHub Spec Kit export ----------
+  // Shape our interview into Spec Kit's own artifacts so the handoff is copy-paste:
+  //   • constitution.md  → .specify/memory/constitution.md
+  //   • spec.md          → paste as the argument to /speckit-specify
+  // Unanswered required fields become [NEEDS CLARIFICATION] markers, which
+  // /speckit-clarify is built to detect and resolve.
+  function A(id){ const v=state.answers[id]; return Array.isArray(v)?v.filter(Boolean).join("; "):(v||"").trim(); }
+  function bullets(id){ const v=A(id); if(!v)return[]; return v.split(/\r?\n|(?<=[.!?])\s+(?=[A-Z0-9])/).map(s=>s.trim().replace(/^[-*]\s*/,"")).filter(Boolean); }
+  function CLAR(hint){ return "[NEEDS CLARIFICATION: "+hint+"]"; }
+  function orClar(id,hint){ const v=A(id); return v||CLAR(hint); }
+
+  function buildConstitution(){
+    const title=state.proj.trim()||"Untitled project";
+    const art=(roman,name,id,verb)=>{ const b=bullets(id); if(!b.length)return"";
+      return `\n### ${roman}. ${name}\n\n`+b.map(x=>`- ${verb} ${x.replace(/^(MUST NOT|MUST|SHOULD NOT|SHOULD|NEVER|NO|DON'?T)\s+/i,"")}`).join("\n")+"\n"; };
+    let md=`# ${title} Constitution\n<!-- Atlas Studio → save as .specify/memory/constitution.md -->\n\n_Ratified ${new Date().toISOString().slice(0,10)} · every plan, task, and build inherits these._\n\n## Core Principles\n`;
+    md+=art("I","Non-Negotiables","prin_values","MUST");
+    md+=art("II","Quality Bar","prin_quality","MUST meet:");
+    md+=art("III","Preferred Stack & Reuse","prin_stack","MUST default to:");
+    md+=art("IV","Hard Lines","prin_never","MUST NOT");
+    if(!bullets("prin_values").length) md+=`\n### I. Non-Negotiables\n\n- ${CLAR("core principles not set in Atlas Studio → Principles")}\n`;
+    md+=`\n## Governance\n\nThis constitution supersedes ad-hoc decisions. Amendments require explicit sign-off and a version bump. All PRs and agent builds MUST verify compliance.\n`;
+    return md;
+  }
+
+  function buildSpecKitSpec(){
+    const title=state.proj.trim()||"Untitled project";
+    const now=new Date().toISOString().slice(0,10);
+    let md=`# Feature Specification: ${title}\n\n`;
+    md+=`**Feature Branch**: \`${slug(state.proj)}\`\n`;
+    md+=`**Created**: ${now}\n`;
+    md+=`**Status**: Draft\n`;
+    md+=`**Source**: Atlas Studio interview (${typeLabel(state.ptype)}) → for GitHub Spec Kit \`/speckit-specify\`\n\n`;
+
+    // Spec Kit wants PRIORITIZED, independently-testable user stories (P1/P2/P3).
+    const succ=A("success_signal"), test=A("test_plan"), flow=A("happy_flow");
+    md+=`## User Scenarios & Testing *(mandatory)*\n\n`;
+    md+=`### User Story 1 - Core journey (Priority: P1)\n\n`;
+    md+=(A("hypothesis")||flow||CLAR("primary user journey — fill MVP hypothesis or UX happy-path"))+"\n\n";
+    md+=`**Why this priority**: The riskiest assumption the MVP exists to test — nothing else delivers value if this fails.\n\n`;
+    md+=`**Independent Test**: ${flow||CLAR("walk the happy path screen-to-screen — set in UX & Flow")}\n\n`;
+    md+=`**Acceptance Scenarios**:\n\n`;
+    md+=(succ?`1. **Given** the MVP is live, **When** the target user completes the core flow, **Then** ${succ}.\n`:`1. ${CLAR("acceptance criterion — set MVP success signal")}\n`);
+    // Each additional MVP must-have becomes its own lower-priority, independently-testable story.
+    const feats=bullets("mvp_features");
+    feats.slice(1).forEach((f,i)=>{
+      md+=`\n### User Story ${i+2} - ${f} (Priority: P${Math.min(i+2,3)})\n\n`;
+      md+=`Deliver: ${f}.\n\n`;
+      md+=`**Why this priority**: A required MVP capability, but the P1 journey is viable before this lands.\n\n`;
+      md+=`**Independent Test**: Exercise "${f}" on its own and confirm it works without the other stories.\n\n`;
+      md+=`**Acceptance Scenarios**:\n\n1. **Given** the feature is built, **When** the user uses "${f}", **Then** it behaves as specified.\n`;
+    });
+    md+=`\n### Edge Cases\n\n`;
+    const st=bullets("ui_states"); md+=(st.length?st.map(x=>`- ${x}`).join("\n"):`- ${CLAR("empty / loading / error / success states — set in UX & Flow")}`)+"\n\n";
+
+    md+=`## Requirements *(mandatory)*\n\n### Functional Requirements\n\n`;
+    let frs=bullets("mvp_features"); if(!frs.length) frs=bullets("screens");
+    if(frs.length) md+=frs.map((f,i)=>`- **FR-${String(i+1).padStart(3,"0")}**: System MUST ${f.replace(/^(system\s+)?must\s+/i,"")}`).join("\n")+"\n";
+    else md+=`- **FR-001**: ${CLAR("MVP must-have features not listed → MVP stage")}\n`;
+
+    md+=`\n### Out of Scope (v1)\n\n`;
+    const cut=bullets("cut_list"); md+=(cut.length?cut.map(x=>`- ${x}`).join("\n"):`- ${CLAR("explicit cut-list — set in MVP")}`)+"\n";
+
+    md+=`\n## Success Criteria *(mandatory)*\n\n`;
+    if(succ||test){ md+=`- **SC-001**: ${succ||CLAR("measurable success signal — set in MVP")}\n`; if(test) md+=`- **SC-002**: Validation — ${test}\n`; }
+    else md+=`- **SC-001**: ${CLAR("measurable success criteria — set in MVP")}\n`;
+
+    // Preserve every other answered question so /speckit-clarify has full context.
+    md+=`\n## Interview Context *(from Atlas Studio — for /speckit-clarify)*\n`;
+    const usedIds=new Set(["hypothesis","happy_flow","success_signal","test_plan","ui_states","mvp_features","screens","cut_list","prin_values","prin_quality","prin_stack","prin_never"]);
+    ["prd","ux","planning"].forEach(sid=>{
+      const stg=STAGES.find(s=>s.id===sid); if(!stg)return; let block="";
+      (stg.sections||[]).forEach(sec=>visQs(sec).forEach(q=>{ if(usedIds.has(q.id))return; const v=A(q.id); if(v) block+=`- **${q.q}** — ${v}\n`; }));
+      if(block) md+=`\n### ${stg.name}\n\n`+block;
+    });
+
+    // Roll up unanswered required fields as clarification markers.
+    const miss=[];
+    visStages().forEach(s=>{ if(s.kind==="interview")(s.sections||[]).forEach(sec=>visQs(sec).forEach(q=>{ if(q.req&&!answered(q))miss.push(`${s.name} › ${q.q}`); })); });
+    if(miss.length) md+=`\n## Needs Clarification\n\n`+miss.map(m=>`- ${CLAR(m)}`).join("\n")+"\n";
+    return md;
+  }
+
+  function buildSpecKitBundle(){
+    return `<!-- ATLAS STUDIO → GITHUB SPEC KIT HANDOFF -->
+<!-- 1) uv tool install specify-cli --from git+https://github.com/github/spec-kit.git -->
+<!-- 2) specify init <project> --integration claude -->
+<!-- 3) Save the CONSTITUTION block to .specify/memory/constitution.md -->
+<!-- 4) Run /speckit-specify and paste the SPEC block as its input -->
+<!-- 5) /speckit-clarify → /speckit-plan → /speckit-tasks → /speckit-implement -->
+
+========================= FILE: .specify/memory/constitution.md =========================
+
+${buildConstitution()}
+
+========================= SPEC (input for /speckit-specify) =========================
+
+${buildSpecKitSpec()}`;
+  }
+
+  async function exportSpecKit(){
+    const bundle=buildSpecKitBundle(), name=slug(state.proj)+"-speckit.md";
+    if(window.claude&&window.claude.downloads){
+      try{ await window.claude.downloads.save({filename:name,data:bundle}); toast("Spec Kit bundle saved as "+name); return; }
+      catch(err){ if(err&&err.code==="declined"){ toast("Export cancelled."); return; } }
+    }
+    copyMD(bundle,"Spec Kit bundle copied — paste the SPEC block into /speckit-specify.");
+  }
+
   // ---------- voice ----------
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   let rec=null,recBtn=null;
@@ -725,6 +835,7 @@
   $("#ptypeSel").addEventListener("change",e=>{state.ptype=e.target.value;save();render();toast("Stages adapted for: "+typeLabel(state.ptype));});
   $("#stageSel").addEventListener("change",e=>{state.stage=e.target.value;save();render();});
   $("#dlBtn").onclick=downloadDoc;
+  $("#speckitBtn").onclick=exportSpecKit;
   $("#copyBtn").onclick=()=>copyMD();
   $("#resetBtn").onclick=()=>{ if(!confirm("Clear everything and start fresh?"))return;
     state={proj:"",ptype:"website",stage:"prd",sec:{},answers:{},tasks:null,checks:{},notes:{},style:"",_tid:1};

@@ -8,6 +8,10 @@ open it in any browser (double-click), no server or internet needed.
   One screen, project-type dropdown (website / web app / mobile / API),
   stages Principles → PRD → UX → MVP → Planning → Building → Launching → Go-live,
   voice input, live spec, and Markdown export. Mobile type adds a Store Readiness stage.
+  **Spec Kit ⤓** exports a GitHub Spec Kit bundle — a `constitution.md` plus a
+  `/speckit.specify`-ready spec (FR-numbered requirements, acceptance scenarios,
+  and `[NEEDS CLARIFICATION]` markers for unanswered required fields) — so the
+  handoff to Spec Kit's `/speckit.*` commands is copy-paste with zero reformatting.
 - **atlas-studio-requirements.html** — the full requirements (meta-PRD) for the
   builder, synthesized from 6 leading tools (Spec Kit, OpenSpec, Ralph,
   Vibe-Coding Template, Loki Mode, AI Product Dev Toolkit).
