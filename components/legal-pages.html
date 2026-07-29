@@ -1,0 +1,159 @@
+<meta charset="utf-8">
+<title>Legal pages — Privacy · Terms · Data Retention</title>
+<!--
+  Atlas package: legal-pages — a self-contained set of policy documents.
+  TEMPLATE ONLY, not legal advice. Fill the data-slot placeholders and have
+  the result reviewed by qualified counsel before publishing.
+  Variants: standard | mobile (app data/permissions) | financial (enhanced security).
+-->
+<style>
+  :root{
+    --bg:#FFFFFF; --ink:#141a22; --muted:#5a6672; --line:#e4e9ee; --sunk:#f6f8fa;
+    --brand:#12897a; --brand-ink:#0b5f55;
+    --radius:10px; --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#0d1117; --ink:#e7ecf1; --muted:#93a0ad; --line:#28323c; --sunk:#141b23; --brand:#2cc1ac; --brand-ink:#7fe6d6; }
+  }
+  :root[data-theme="light"]{ --bg:#FFFFFF; --ink:#141a22; --muted:#5a6672; --line:#e4e9ee; --sunk:#f6f8fa; --brand:#12897a; --brand-ink:#0b5f55; }
+  :root[data-theme="dark"]{ --bg:#0d1117; --ink:#e7ecf1; --muted:#93a0ad; --line:#28323c; --sunk:#141b23; --brand:#2cc1ac; --brand-ink:#7fe6d6; }
+
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:44rem;margin:0 auto;padding:2rem 1.3rem 4rem;}
+  .tmpl-note{background:var(--sunk);border:1px solid var(--line);border-left:3px solid var(--brand);border-radius:8px;padding:.6rem .8rem;font-size:.82rem;color:var(--muted);margin-bottom:1.4rem;}
+  h1{font-size:1.7rem;letter-spacing:-.02em;margin:0 0 .3rem;}
+  .meta{font-size:.85rem;color:var(--muted);margin-bottom:1.3rem;}
+  .toolbar{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;margin-bottom:1.2rem;}
+  .tabs{display:flex;gap:.35rem;flex-wrap:wrap;}
+  .tab{border:1px solid var(--line);background:var(--sunk);color:var(--muted);border-radius:100px;padding:.4rem .8rem;font-size:.85rem;font-weight:600;cursor:pointer;}
+  .tab[aria-selected="true"]{background:var(--brand);color:#fff;border-color:var(--brand);}
+  .variant{margin-left:auto;display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:var(--muted);}
+  select#variantSel{background:var(--sunk);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.35rem .5rem;font-family:inherit;font-size:.82rem;}
+  .doc h2{font-size:1.25rem;margin:1.4rem 0 .5rem;letter-spacing:-.01em;}
+  .doc h3{font-size:1rem;margin:1.1rem 0 .3rem;}
+  .doc p,.doc li{color:var(--ink);font-size:.95rem;}
+  .doc ul{padding-left:1.2rem;}
+  [data-slot]{color:var(--brand-ink);font-weight:600;font-style:normal;}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);margin:.8rem 0;}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:30rem;}
+  th,td{text-align:left;padding:.6rem .8rem;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{background:var(--sunk);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);}
+  tr:last-child td{border-bottom:0;}
+  .variant-badge{display:inline-block;font-size:.62rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--brand-ink);border:1px solid var(--line);border-radius:5px;padding:.05rem .35rem;margin-left:.4rem;vertical-align:middle;}
+  [data-variant-only]{background:color-mix(in srgb,var(--brand) 6%,transparent);border-left:2px solid var(--brand);border-radius:6px;padding:.6rem .8rem;margin:.7rem 0;}
+</style>
+
+<main class="wrap" id="legalPages" data-variant="standard">
+  <p class="tmpl-note">📄 Template — not legal advice. Replace every <code>[bracketed]</code> slot and have counsel review before publishing.</p>
+  <h1>Legal &amp; Policy Center</h1>
+  <p class="meta"><span data-slot="company">[Your Company]</span> · Effective <span data-slot="effectiveDate">[effective date]</span> · Jurisdiction: <span data-slot="jurisdiction">[your jurisdiction]</span></p>
+
+  <div class="toolbar">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-doc-tab="privacy" aria-selected="true">Privacy Policy</button>
+      <button class="tab" role="tab" data-doc-tab="terms" aria-selected="false">Terms of Service</button>
+      <button class="tab" role="tab" data-doc-tab="retention" aria-selected="false">Data Retention</button>
+    </div>
+    <label class="variant">Variant
+      <select id="variantSel" title="Show clauses for this product type">
+        <option value="standard">Standard</option>
+        <option value="mobile">Mobile app</option>
+        <option value="financial">Financial</option>
+      </select>
+    </label>
+  </div>
+
+  <!-- ============ PRIVACY ============ -->
+  <section class="doc" data-doc="privacy">
+    <h2>Privacy Policy</h2>
+    <p><span data-slot="company">[Your Company]</span> ("we") explains here what data we collect, why, and your rights.</p>
+    <h3>1. Data we collect</h3>
+    <ul>
+      <li>Account data you provide (name, email).</li>
+      <li>Usage &amp; analytics data to improve the service.</li>
+      <li>Cookies &amp; similar technologies (see the consent banner).</li>
+    </ul>
+
+    <div data-variant-only="mobile">
+      <strong>Mobile app data <span class="variant-badge">mobile</span></strong>
+      <ul>
+        <li>Device identifiers, OS version, and app performance/crash data.</li>
+        <li>Permissions you grant (camera, location, notifications) — used only for the stated feature.</li>
+        <li>Push-notification tokens, if you enable notifications.</li>
+        <li>Data collected by mobile SDKs is disclosed in our App Store / Play Store privacy labels.</li>
+      </ul>
+    </div>
+
+    <div data-variant-only="financial">
+      <strong>Financial data &amp; enhanced protection <span class="variant-badge">financial</span></strong>
+      <ul>
+        <li>Payment and transaction records, processed under PCI-DSS-aligned controls.</li>
+        <li>Identity-verification (KYC) data, where legally required.</li>
+        <li>Encryption in transit and at rest; access strictly logged and least-privilege.</li>
+      </ul>
+    </div>
+
+    <h3>2. Your rights</h3>
+    <p>You may request access, correction, deletion, or portability of your data by contacting <span data-slot="contact">[privacy@yourcompany.com]</span>.</p>
+  </section>
+
+  <!-- ============ TERMS ============ -->
+  <section class="doc" data-doc="terms" hidden>
+    <h2>Terms of Service</h2>
+    <p>By using <span data-slot="company">[Your Company]</span>, you agree to these terms.</p>
+    <h3>1. Use of the service</h3>
+    <p>You agree to use the service lawfully and not to disrupt or misuse it.</p>
+    <h3>2. Accounts</h3>
+    <p>You are responsible for activity under your account and for keeping credentials secure.</p>
+    <div data-variant-only="financial">
+      <strong>Financial services terms <span class="variant-badge">financial</span></strong>
+      <p>Financial features may be subject to additional regulatory terms, eligibility checks, and disclosures required by <span data-slot="jurisdiction">[your jurisdiction]</span>.</p>
+    </div>
+    <h3>3. Liability &amp; changes</h3>
+    <p>The service is provided "as is". We may update these terms; material changes will be notified. Questions: <span data-slot="contact">[privacy@yourcompany.com]</span>.</p>
+  </section>
+
+  <!-- ============ RETENTION ============ -->
+  <section class="doc" data-doc="retention" hidden>
+    <h2>Data Retention</h2>
+    <p>How long we keep each category of data, and why.</p>
+    <div class="tablewrap">
+      <table id="retentionTable">
+        <thead><tr><th>Data category</th><th>Retention period</th><th>Reason</th></tr></thead>
+        <tbody>
+          <tr><td>Account data</td><td>Until account deletion + 30 days</td><td>Provide the service</td></tr>
+          <tr><td>Analytics / usage</td><td>26 months</td><td>Improve the product</td></tr>
+          <tr><td>Support messages</td><td>24 months</td><td>Handle disputes</td></tr>
+          <tr data-variant-only="mobile"><td>Device identifiers &amp; crash logs</td><td>13 months</td><td>App stability (mobile)</td></tr>
+          <tr data-variant-only="financial"><td>Transaction &amp; KYC records</td><td>7 years</td><td>Legal/regulatory (financial)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Deletion requests: <span data-slot="contact">[privacy@yourcompany.com]</span>.</p>
+  </section>
+</main>
+
+<script>
+(function(){
+  var root=document.getElementById("legalPages");
+  function showDoc(id){
+    root.querySelectorAll("[data-doc]").forEach(function(s){ s.hidden = s.getAttribute("data-doc")!==id; });
+    root.querySelectorAll("[data-doc-tab]").forEach(function(t){ t.setAttribute("aria-selected", String(t.getAttribute("data-doc-tab")===id)); });
+  }
+  function applyVariant(v){
+    root.setAttribute("data-variant", v);
+    root.querySelectorAll("[data-variant-only]").forEach(function(el){
+      var only=el.getAttribute("data-variant-only");
+      el.hidden = (v!=="all") && (only!==v);
+    });
+  }
+  root.querySelectorAll("[data-doc-tab]").forEach(function(t){
+    t.addEventListener("click", function(){ showDoc(t.getAttribute("data-doc-tab")); });
+  });
+  var vsel=root.querySelector("#variantSel");
+  if(vsel){ vsel.value = root.getAttribute("data-variant")||"standard"; vsel.addEventListener("change", function(){ applyVariant(vsel.value); }); }
+  applyVariant(root.getAttribute("data-variant")||"standard");
+  showDoc("privacy");
+})();
+</script>
