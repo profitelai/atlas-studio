@@ -1,0 +1,272 @@
+<title>Atlas Studio — Full Requirements (the PRD for our PRD builder)</title>
+<style>
+  :root{
+    --paper:#F5F8FA;--surface:#FFFFFF;--surface-2:#EAEFF3;--sunk:#F7F9FB;
+    --ink:#0F1620;--ink-soft:#3B4753;--ink-faint:#6B7784;--line:#DAE1E7;
+    --accent:#12897A;--accent-deep:#0B5F55;--accent-soft:#E2F0ED;
+    --warn:#C07A1E;--crit:#C4453B;--good:#12897A;
+    --radius:11px;--maxw:48rem;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --paper:#0C1116;--surface:#141B22;--surface-2:#1B242D;--sunk:#10161C;
+    --ink:#E7ECF1;--ink-soft:#B3BEC9;--ink-faint:#7B8894;--line:#28323C;
+    --accent:#2CC1AC;--accent-deep:#7FE6D6;--accent-soft:#12312D;--warn:#E0A44E;--crit:#E8695E;--good:#2CC1AC;
+  }}
+  :root[data-theme="light"]{--paper:#F5F8FA;--surface:#FFFFFF;--surface-2:#EAEFF3;--sunk:#F7F9FB;--ink:#0F1620;--ink-soft:#3B4753;--ink-faint:#6B7784;--line:#DAE1E7;--accent:#12897A;--accent-deep:#0B5F55;--accent-soft:#E2F0ED;--warn:#C07A1E;--crit:#C4453B;--good:#12897A;}
+  :root[data-theme="dark"]{--paper:#0C1116;--surface:#141B22;--surface-2:#1B242D;--sunk:#10161C;--ink:#E7ECF1;--ink-soft:#B3BEC9;--ink-faint:#7B8894;--line:#28323C;--accent:#2CC1AC;--accent-deep:#7FE6D6;--accent-soft:#12312D;--warn:#E0A44E;--crit:#E8695E;--good:#2CC1AC;}
+
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 1.4rem 5rem;}
+
+  .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);background:radial-gradient(120% 80% at 85% -10%,color-mix(in srgb,var(--accent) 12%,transparent),transparent 60%),var(--surface);}
+  .hero-in{max-width:var(--maxw);margin:0 auto;padding:3.2rem 1.4rem 2.4rem;position:relative;z-index:1;}
+  .contours{position:absolute;inset:0;z-index:0;opacity:.5;pointer-events:none;}
+  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:0 0 1rem;display:flex;gap:.6rem;align-items:center;}
+  .eyebrow::before{content:"";width:26px;height:1px;background:var(--accent);}
+  h1{font-size:clamp(2rem,5.5vw,2.95rem);line-height:1.04;letter-spacing:-.02em;font-weight:800;margin:0 0 .5rem;text-wrap:balance;}
+  .codename{color:var(--accent);}
+  .subhead{font-size:1.1rem;color:var(--ink-soft);margin:0;max-width:35rem;text-wrap:balance;}
+  .meta{display:flex;flex-wrap:wrap;gap:1.3rem 2rem;margin-top:1.9rem;padding-top:1.3rem;border-top:1px solid var(--line);font-family:var(--mono);font-size:.73rem;}
+  .meta div{display:flex;flex-direction:column;gap:.25rem;}
+  .meta .k{color:var(--ink-faint);letter-spacing:.1em;text-transform:uppercase;font-size:.64rem;}
+  .meta .v{color:var(--ink);font-weight:600;}
+
+  section{padding-top:2.7rem;}
+  .lbl{font-family:var(--mono);font-size:.71rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin:0 0 .5rem;}
+  h2{font-size:1.5rem;letter-spacing:-.015em;margin:0 0 .9rem;line-height:1.15;text-wrap:balance;}
+  h3{font-size:1.06rem;margin:1.4rem 0 .4rem;letter-spacing:-.01em;}
+  p{margin:0 0 1rem;}strong{color:var(--ink);}
+  .lead{font-size:1.06rem;color:var(--ink-soft);}
+
+  .tldr{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:1.2rem 1.35rem;margin-top:1.3rem;}
+  .tldr p:last-child{margin-bottom:0;}
+
+  .tablewrap{overflow-x:auto;margin-top:1rem;border:1px solid var(--line);border-radius:var(--radius);}
+  table{border-collapse:collapse;width:100%;font-size:.88rem;min-width:34rem;}
+  th,td{text-align:left;padding:.65rem .85rem;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);background:var(--surface-2);}
+  tr:last-child td{border-bottom:0;}
+  td b{color:var(--ink);}
+
+  /* differentiators */
+  .diffs{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;margin-top:1.2rem;}
+  @media (max-width:560px){.diffs{grid-template-columns:1fr;}}
+  .diff{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1.05rem 1.15rem;border-top:3px solid var(--accent);}
+  .diff h4{margin:0 0 .3rem;font-size:.97rem;}
+  .diff p{margin:0;font-size:.87rem;color:var(--ink-soft);}
+  .diff .src{font-family:var(--mono);font-size:.64rem;color:var(--accent);letter-spacing:.05em;text-transform:uppercase;margin-top:.5rem;display:block;}
+
+  /* stage list */
+  .stage{display:grid;grid-template-columns:auto 1fr;gap:1rem;}
+  .srail{display:flex;flex-direction:column;align-items:center;}
+  .sdot{width:1.75rem;height:1.75rem;border-radius:8px;background:var(--accent);color:#fff;font-family:var(--mono);font-weight:700;font-size:.8rem;display:grid;place-items:center;flex:none;}
+  .stage:not(:last-child) .sline{width:2px;flex:1;background:var(--line);margin:.3rem 0;}
+  .sbody{padding-bottom:1.3rem;}
+  .sbody h4{margin:.1rem 0 .2rem;font-size:1.02rem;}
+  .sbody p{margin:0 0 .35rem;font-size:.92rem;color:var(--ink-soft);}
+  .sbody .out{font-family:var(--mono);font-size:.72rem;color:var(--accent-deep);background:var(--accent-soft);border-radius:6px;padding:.3rem .55rem;display:inline-block;}
+
+  /* requirements */
+  .req{display:grid;grid-template-columns:auto 1fr;gap:.85rem;padding:.7rem 0;border-top:1px solid var(--line);}
+  .req:first-of-type{border-top:0;}
+  .req .id{font-family:var(--mono);font-size:.72rem;font-weight:700;color:#fff;background:var(--accent);border-radius:5px;padding:.2rem .45rem;height:fit-content;white-space:nowrap;}
+  .req .id.nf{background:var(--ink-faint);}
+  .req .txt{font-size:.93rem;}
+  .req .txt b{color:var(--ink);}
+  .grp{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:1.4rem 0 .3rem;}
+
+  .callout{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 10%,var(--surface)),var(--surface));border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));border-radius:var(--radius);padding:1.4rem;margin-top:1.2rem;}
+  .callout .tag{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-deep);font-weight:700;}
+  .callout h3{margin:.4rem 0 .5rem;font-size:1.18rem;}
+
+  .code{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);padding:1rem 1.15rem;overflow-x:auto;margin-top:1rem;font-family:var(--mono);font-size:.78rem;line-height:1.6;color:var(--ink-soft);}
+  .code .c{color:var(--ink-faint);font-style:italic;}.code .k{color:var(--accent-deep);}
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem;margin-top:1.1rem;}
+  @media (max-width:560px){.stats{grid-template-columns:1fr;}}
+  .stat{border:1px solid var(--line);border-radius:var(--radius);padding:1rem 1.1rem;background:var(--surface);}
+  .stat .big{font-size:1.35rem;font-weight:800;letter-spacing:-.01em;color:var(--accent);}
+  .stat .l{font-size:.82rem;color:var(--ink-faint);margin-top:.2rem;}
+
+  footer{margin-top:3.4rem;padding-top:1.3rem;border-top:1px solid var(--line);font-family:var(--mono);font-size:.71rem;color:var(--ink-faint);}
+</style>
+
+<div class="hero">
+  <svg class="contours" viewBox="0 0 800 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g fill="none" stroke="var(--accent)" stroke-width="1" opacity="0.26">
+      <path d="M-40 210 Q160 150 340 200 T720 170 T900 210"/><path d="M-40 240 Q160 185 340 230 T720 205 T900 245"/>
+      <path d="M-40 270 Q160 220 340 260 T720 240 T900 278"/><path d="M-40 180 Q200 130 360 165 T760 135 T900 175"/>
+      <path d="M-40 150 Q220 110 380 135 T780 105 T900 145"/>
+    </g>
+  </svg>
+  <div class="hero-in">
+    <p class="eyebrow">Requirements · The meta-spec</p>
+    <h1><span class="codename">Atlas Studio</span><br>Full Requirements</h1>
+    <p class="subhead">The PRD for our PRD builder — the one tool that takes any idea from principle to shipped, and hands a coding agent everything it needs to build it right the first time.</p>
+    <div class="meta">
+      <div><span class="k">For</span><span class="v">ODM World</span></div>
+      <div><span class="k">Date</span><span class="v">2026-07-28</span></div>
+      <div><span class="k">Status</span><span class="v">Requirements v1</span></div>
+      <div><span class="k">Synthesized from</span><span class="v">6 leading tools</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <section>
+    <p class="lbl">Purpose</p>
+    <h2>Why this tool exists</h2>
+    <div class="tldr">
+      <p>You lose time because specs are vague, disconnected, and get re-explained to every agent five times. Atlas Studio is the fix: <strong>one screen that interviews you deeply, enforces that every goal is testable, and outputs an agent-ready package</strong> — spec, plan, tasks, and agent instructions — so the next app is built fast, correct, and connected to everything else you run.</p>
+      <p>It is the front door to Atlas. Before speccing anything new, it asks the catalog <em>"do we already have this?"</em> — so we reuse, not rebuild.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="lbl">Research basis</p>
+    <h2>What we studied, and what we took</h2>
+    <p>Six leading tools were analyzed. Each is best-in-class at one thing; none combines them. Atlas Studio's job is to be the union.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Tool</th><th>What makes it outstanding</th><th>What we adopt</th></tr></thead>
+      <tbody>
+        <tr><td><b>GitHub Spec Kit</b></td><td>Staged lifecycle + <b>converge</b> drift detection</td><td>The stage spine + a drift gate at Go-live</td></tr>
+        <tr><td><b>OpenSpec</b></td><td>Plain <b>WHEN…THEN</b> scenarios; edit anytime</td><td>Requirement format + fluid, non-rigid editing</td></tr>
+        <tr><td><b>Ralph</b></td><td>Story <b>passes</b> loop; append-only progress log; git-as-memory</td><td>The Building loop + agent memory files</td></tr>
+        <tr><td><b>Vibe-Coding Template</b></td><td>Think-before-code; emits <b>AGENTS.md / MEMORY.md</b></td><td>Export an agent-ready bundle, not just a doc</td></tr>
+        <tr><td><b>Loki Mode</b> <span style="color:var(--ink-faint)">(98.8% HumanEval)</span></td><td><b>Evidence Receipts</b>, blocking quality gates, <b>measurable-goal</b> validation, honest "pending"</td><td>Verified "done", metric-enforced goals, gates</td></tr>
+        <tr><td><b>AI Product Dev Toolkit</b></td><td>Guided <b>conversational chaining</b> + checkpoints</td><td>Clarifying interview + per-stage sign-off</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <p class="lbl">The edge</p>
+    <h2>Six things that make ours the best</h2>
+    <div class="diffs">
+      <div class="diff"><h4>One screen, whole lifecycle</h4><p>Principle → PRD → Plan → Build → Launch → Go-live in a single dropdown — not scattered CLI commands.</p><span class="src">beats: all six</span></div>
+      <div class="diff"><h4>Measurable-goal enforcement</h4><p>Rejects "make it fast." Every goal needs a number, a threshold, or an artifact before it can pass.</p><span class="src">from: Loki Mode</span></div>
+      <div class="diff"><h4>Agent-ready output bundle</h4><p>Exports PRD + tasks + AGENTS.md/CLAUDE.md + review checklist, so a coding agent starts instantly.</p><span class="src">from: Vibe + Ralph</span></div>
+      <div class="diff"><h4>Evidence-based "done"</h4><p>A task is done only with proof — tests pass, a diff exists. No AI self-congratulation.</p><span class="src">from: Loki Mode</span></div>
+      <div class="diff"><h4>Voice-first capture</h4><p>Talk your answers. The interview meets you where you already are — speaking, not typing.</p><span class="src">beats: all six</span></div>
+      <div class="diff"><h4>Wired into Atlas</h4><p>Reuse-check before speccing; drift + benchmark handoff after launch. The spec never floats.</p><span class="src">unique to us</span></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="lbl">The lifecycle</p>
+    <h2>Stages, and what each must produce</h2>
+    <p>Every stage has a <em>gate</em>: it can't be marked complete until its required outputs exist. This is what stops half-baked specs reaching a builder. The order is <strong>design-first and MVP-gated</strong> — we design the experience and shrink to the smallest testable slice <em>before</em> planning the build (adopted from the AI Product Dev Toolkit).</p>
+    <div>
+      <div class="stage"><div class="srail"><span class="sdot">0</span><span class="sline"></span></div><div class="sbody"><h4>Principles</h4><p>The standing rules every project inherits — reuse-first, cheap-model default, quality bar, hard "never" lines. Set once.</p><span class="out">→ principles.md (the constitution)</span></div></div>
+      <div class="stage"><div class="srail"><span class="sdot">1</span><span class="sline"></span></div><div class="sbody"><h4>PRD — what &amp; why</h4><p>Deep branching interview: problem, users, scope, functionality, connections, data, automation, AI, reporting, benchmark, success. Goals must be measurable to pass.</p><span class="out">→ prd.md · requirements as WHEN…THEN</span></div></div>
+      <div class="stage"><div class="srail"><span class="sdot">2</span><span class="sline"></span></div><div class="sbody"><h4>UX &amp; Flow — design first</h4><p>Screens, the screen-to-screen flow, key components, and the empty/loading/error states most builds forget. Fed from the PRD, before any code.</p><span class="out">→ ux.md · v0.dev / Figma visual prompt</span></div></div>
+      <div class="stage"><div class="srail"><span class="sdot">3</span><span class="sline"></span></div><div class="sbody"><h4>MVP — smallest slice</h4><p>The riskiest assumption, the 1–3 features that test it, an explicit cut-list, a measurable success signal, and how we'll test it. The discipline against "building a big thing nobody wants."</p><span class="out">→ mvp.md · test plan</span></div></div>
+      <div class="stage"><div class="srail"><span class="sdot">4</span><span class="sline"></span></div><div class="sbody"><h4>Planning — the how</h4><p>Stack, architecture, data model, integrations, security controls, build order, technical risks — now informed by the UX and MVP scope.</p><span class="out">→ plan.md · design.md</span></div></div>
+      <div class="stage"><div class="srail"><span class="sdot">5</span><span class="sline"></span></div><div class="sbody"><h4>Building — the loop</h4><p>Plan split into small stories, each with a passes flag. An append-only progress log captures learnings (Ralph). Ships until all pass.</p><span class="out">→ tasks.json · progress.md</span></div></div>
+      <div class="stage"><div class="srail"><span class="sdot">6</span><span class="sline"></span></div><div class="sbody"><h4>Launching — the gate</h4><p>Blocking checklist across Quality, Security, SEO/Perf, Legal, and Ops/Atlas. Nothing ships red; unknowns are "pending", never false-green.</p><span class="out">→ launch-checklist.md · evidence receipt</span></div></div>
+      <div class="stage"><div class="srail"><span class="sdot">7</span></div><div class="sbody"><h4>Go-live — hand off to Atlas</h4><p>Go/no-go sign-off, then Atlas takes over: watch for drift, schedule the competitor benchmark, promote reusable parts to the catalog, email the first health report.</p><span class="out">→ go-live.md · Atlas monitoring active</span></div></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="lbl">The quality engine</p>
+    <h2>What makes the output trustworthy</h2>
+    <p>These are the mechanisms — mostly borrowed from Loki Mode and Spec Kit — that separate a real spec from a wish-list.</p>
+    <h3>Measurable goals only</h3>
+    <p>Any goal phrased as "fast", "better", "secure", "nice" is flagged and blocked until it carries a number, threshold, or concrete artifact. <em>"Loads under 2s on 4G"</em> passes; <em>"feels snappy"</em> does not.</p>
+    <h3>WHEN…THEN requirements</h3>
+    <p>Behaviours are captured as testable scenarios, so a builder (human or agent) knows exactly what "correct" means and QA can verify it.</p>
+    <div class="code"><span class="c"># a requirement the builder can actually test</span>
+<span class="k">WHEN</span> a user submits the form with a missing email
+<span class="k">THEN</span> show an inline error and do not create the record</div>
+    <h3>Evidence-based done</h3>
+    <p>A Building story flips to done only with proof attached — a passing test name, a diff, a screenshot. Self-reported "done" without evidence stays open.</p>
+    <h3>Honest incompleteness</h3>
+    <p>Unverified items are reported as <strong>pending</strong>, never silently passed. The export always ends with a "Still open" list of required-but-unanswered items.</p>
+    <h3>Drift handoff</h3>
+    <p>At Go-live the spec is locked; Atlas thereafter reports divergence between the shipped reality and the spec — the same converge idea, made continuous.</p>
+  </section>
+
+  <section>
+    <p class="lbl">The deliverable</p>
+    <h2>The agent-ready bundle — why the next app builds fast</h2>
+    <p>The whole point: Atlas Studio doesn't hand you a document to re-explain. It exports a folder a coding agent consumes directly and starts building.</p>
+    <div class="code"><span class="c"># exported on demand — the handoff package</span>
+principles.md        <span class="c"># standing rules</span>
+prd.md               <span class="c"># what &amp; why, WHEN…THEN requirements</span>
+plan.md              <span class="c"># stack, architecture, data model</span>
+tasks.json           <span class="c"># stories with passes flags (Ralph loop)</span>
+AGENTS.md / CLAUDE.md<span class="c"># behaviour contract for the coding agent</span>
+review-checklist.md  <span class="c"># the launch gate the agent must clear</span>
+memory.md            <span class="c"># decisions &amp; context so nothing is re-asked</span></div>
+    <p style="margin-top:1rem;color:var(--ink-faint);font-size:.92rem;">This bundle is also what gets promoted into the Atlas catalog when the work finishes — so next time it's reused, not rebuilt.</p>
+  </section>
+
+  <section>
+    <p class="lbl">Requirements</p>
+    <h2>Functional</h2>
+
+    <p class="grp">Interview &amp; capture</p>
+    <div class="req"><span class="id">FR-1</span><span class="txt">The tool <b>presents a staged, single-screen workflow</b> with a stage selector; the user can move freely between stages and edit any answer at any time.</span></div>
+    <div class="req"><span class="id">FR-2</span><span class="txt">Each interview question <b>branches conditionally</b> on prior answers (e.g. "uses AI" reveals model/cost questions), so the user is never asked irrelevant questions.</span></div>
+    <div class="req"><span class="id">FR-3</span><span class="txt">Every text field accepts <b>voice input</b> (speech-to-text) with graceful fallback to typing where the microphone is unavailable.</span></div>
+    <div class="req"><span class="id">FR-4</span><span class="txt">Answers <b>autosave</b> continuously and restore on reopen; the user can reset to a clean project.</span></div>
+
+    <p class="grp">Quality enforcement</p>
+    <div class="req"><span class="id">FR-5</span><span class="txt">The tool <b>flags non-measurable goals</b> and prompts for a number, threshold, or artifact before that item counts as complete.</span></div>
+    <div class="req"><span class="id">FR-6</span><span class="txt">Behavioural requirements can be captured as <b>WHEN…THEN scenarios</b>, and the tool encourages this format.</span></div>
+    <div class="req"><span class="id">FR-7</span><span class="txt">Each stage has a <b>completion gate</b>; the stage shows incomplete until its required outputs exist. Required-but-missing items surface in a persistent "Still open" list.</span></div>
+    <div class="req"><span class="id">FR-8</span><span class="txt">Building stories carry a <b>passes flag with attached evidence</b>; a story cannot be "done" without proof (test name, diff, or screenshot reference).</span></div>
+
+    <p class="grp">Build &amp; launch</p>
+    <div class="req"><span class="id">FR-9</span><span class="txt">The Building stage manages a <b>task list</b> (add/edit/delete, priority, done) and an <b>append-only progress log</b>.</span></div>
+    <div class="req"><span class="id">FR-10</span><span class="txt">The Launch stage provides a <b>blocking checklist</b> across Quality, Security, SEO/Performance, Legal/Content, and Ops/Atlas; unknowns are marked pending, not passed.</span></div>
+    <div class="req"><span class="id">FR-11</span><span class="txt">The Go-live stage records a <b>go/no-go decision</b> and an Atlas hand-off (watch, benchmark, promote, report).</span></div>
+
+    <p class="grp">Output &amp; integration</p>
+    <div class="req"><span class="id">FR-12</span><span class="txt">The tool <b>exports the full agent-ready bundle</b> (principles, PRD, plan, tasks.json, AGENTS.md/CLAUDE.md, review checklist, memory) as downloadable files.</span></div>
+    <div class="req"><span class="id">FR-13</span><span class="txt">Before a new PRD, the tool <b>queries the Atlas catalog</b> for an existing package that already solves it, and surfaces reuse candidates. <span style="color:var(--ink-faint)">(needs the Atlas backend)</span></span></div>
+    <div class="req"><span class="id">FR-14</span><span class="txt">On completion, the finished bundle can be <b>promoted into the Atlas catalog</b> as a reusable package + skill. <span style="color:var(--ink-faint)">(needs the Atlas backend)</span></span></div>
+
+    <h2 style="margin-top:2rem;">Non-functional</h2>
+    <div class="req"><span class="id nf">NFR-1</span><span class="txt"><b>Fast &amp; frictionless:</b> the tool runs client-side, loads instantly, and never blocks on a network call for core capture.</span></div>
+    <div class="req"><span class="id nf">NFR-2</span><span class="txt"><b>Private by default:</b> data stays local until the user explicitly exports; no silent uploads.</span></div>
+    <div class="req"><span class="id nf">NFR-3</span><span class="txt"><b>Model-tiered when AI is added:</b> cheap/fast model for routine capture &amp; classification, strong model only for synthesis &amp; build. <span style="color:var(--ink-faint)">(backend phase)</span></span></div>
+    <div class="req"><span class="id nf">NFR-4</span><span class="txt"><b>Theme-aware &amp; accessible:</b> works in light/dark, keyboard-navigable, respects reduced motion.</span></div>
+    <div class="req"><span class="id nf">NFR-5</span><span class="txt"><b>Tool-agnostic output:</b> the bundle works with Claude Code, Cursor, Copilot, or a plain human — no lock-in.</span></div>
+  </section>
+
+  <section>
+    <p class="lbl">Build plan</p>
+    <h2>How we ship the builder itself</h2>
+    <div class="stats">
+      <div class="stat"><div class="big">Phase 1</div><div class="l"><b>The tool as it stands</b> — staged capture, branching, voice, live spec, bundle export. Client-side, shipping now.</div></div>
+      <div class="stat"><div class="big">Phase 2</div><div class="l"><b>Quality engine</b> — measurable-goal flagging, WHEN…THEN helpers, evidence-gated tasks, richer export (AGENTS.md, tasks.json).</div></div>
+      <div class="stat"><div class="big">Phase 3</div><div class="l"><b>Atlas wiring</b> — reuse-check before speccing, promote-on-finish, drift handoff. Needs the backend + MCP.</div></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="lbl">Success metrics</p>
+    <h2>How we'll know it worked</h2>
+    <div class="stats">
+      <div class="stat"><div class="big">0</div><div class="l">specs reaching a builder with a non-measurable goal</div></div>
+      <div class="stat"><div class="big">1 pass</div><div class="l">from idea to a build-ready bundle — no re-explaining to the agent</div></div>
+      <div class="stat"><div class="big">↑ reuse</div><div class="l">features reused from the catalog vs. rebuilt from scratch</div></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="lbl">Open questions</p>
+    <h2>Decisions still owed</h2>
+    <div class="req"><span class="id">Q1</span><span class="txt"><b>tasks.json shape</b> — do we match Ralph's format exactly so its loop can consume our output directly?</span></div>
+    <div class="req"><span class="id">Q2</span><span class="txt"><b>AGENTS.md vs CLAUDE.md</b> — emit both, or just the one for your primary coding agent?</span></div>
+    <div class="req"><span class="id">Q3</span><span class="txt"><b>Where the bundle lands</b> — download only, or push straight into a project git repo / the Atlas catalog?</span></div>
+    <div class="req"><span class="id">Q4</span><span class="txt"><b>Interview depth</b> — is the current PRD question set right, or should Principles &amp; Planning go deeper before we lock Phase 2?</span></div>
+  </section>
+
+  <footer>ATLAS STUDIO · Full Requirements v1 · synthesized from Spec Kit · OpenSpec · Ralph · Vibe-Coding Template · Loki Mode · AI Product Dev Toolkit · 2026-07-28</footer>
+</div>

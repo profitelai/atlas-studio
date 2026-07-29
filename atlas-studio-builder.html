@@ -1,0 +1,707 @@
+<title>Atlas Studio — Spec-to-Ship Builder</title>
+<style>
+  :root {
+    --paper:#F4F7F9; --surface:#FFFFFF; --surface-2:#EDF1F4; --sunk:#F7F9FB;
+    --ink:#0F1620; --ink-soft:#3C4854; --ink-faint:#6C7986; --line:#DBE2E8;
+    --accent:#12897A; --accent-deep:#0B5F55; --accent-soft:#E3F1EE;
+    --warn:#C07A1E; --good:#12897A; --danger:#C4453B;
+    --radius:12px; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --paper:#0C1116; --surface:#141B22; --surface-2:#1B242D; --sunk:#10161C;
+    --ink:#E7ECF1; --ink-soft:#B3BEC9; --ink-faint:#7B8894; --line:#28323C;
+    --accent:#2CC1AC; --accent-deep:#7FE6D6; --accent-soft:#12312D;
+    --warn:#E0A44E; --good:#2CC1AC; --danger:#E8695E;
+  }}
+  :root[data-theme="light"]{--paper:#F4F7F9;--surface:#FFFFFF;--surface-2:#EDF1F4;--sunk:#F7F9FB;--ink:#0F1620;--ink-soft:#3C4854;--ink-faint:#6C7986;--line:#DBE2E8;--accent:#12897A;--accent-deep:#0B5F55;--accent-soft:#E3F1EE;--warn:#C07A1E;--good:#12897A;--danger:#C4453B;}
+  :root[data-theme="dark"]{--paper:#0C1116;--surface:#141B22;--surface-2:#1B242D;--sunk:#10161C;--ink:#E7ECF1;--ink-soft:#B3BEC9;--ink-faint:#7B8894;--line:#28323C;--accent:#2CC1AC;--accent-deep:#7FE6D6;--accent-soft:#12312D;--warn:#E0A44E;--good:#2CC1AC;--danger:#E8695E;}
+
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased;}
+  button{font-family:inherit;cursor:pointer;}
+  input,textarea,select{font-family:inherit;}
+
+  .topbar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--surface) 90%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);}
+  .topbar-in{max-width:1200px;margin:0 auto;padding:.7rem 1.1rem;display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:.55rem;font-weight:700;letter-spacing:-.01em;font-size:1rem;}
+  .brand .dot{width:24px;height:24px;border-radius:7px;background:var(--accent);display:grid;place-items:center;font-size:.9rem;}
+  .brand small{font-weight:500;color:var(--ink-faint);font-size:.72rem;}
+  .proj{flex:1;min-width:150px;}
+  .proj input{width:100%;background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:.5rem .7rem;color:var(--ink);font-size:.92rem;}
+  .proj input:focus{outline:2px solid var(--accent);outline-offset:-1px;}
+  select.ptype{background:var(--accent-soft);border:1px solid var(--accent);border-radius:8px;padding:.5rem 1.9rem .5rem .7rem;color:var(--ink);font-size:.82rem;font-weight:700;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--accent) 50%),linear-gradient(135deg,var(--accent) 50%,transparent 50%);background-position:calc(100% - 15px) 55%,calc(100% - 11px) 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
+  select.ptype:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .tb-actions{display:flex;gap:.5rem;align-items:center;}
+  .btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:.5rem .8rem;font-size:.84rem;font-weight:600;display:inline-flex;align-items:center;gap:.4rem;}
+  .btn:hover{border-color:var(--accent);}
+  .btn.primary{background:var(--accent);color:#08201d;border-color:var(--accent);}
+  .btn.ghost{background:transparent;}
+  .btn.small{padding:.35rem .55rem;font-size:.78rem;}
+  .saved{font-family:var(--mono);font-size:.68rem;color:var(--ink-faint);letter-spacing:.04em;}
+
+  .stagebar{max-width:1200px;margin:0 auto;padding:.7rem 1.1rem .2rem;display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;}
+  .stage-pick{display:flex;align-items:center;gap:.5rem;}
+  .stage-pick label{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);}
+  select.stage{background:var(--surface);border:1px solid var(--accent);border-radius:9px;padding:.5rem 2rem .5rem .75rem;color:var(--ink);font-size:.95rem;font-weight:700;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--accent) 50%),linear-gradient(135deg,var(--accent) 50%,transparent 50%);background-position:calc(100% - 18px) 55%,calc(100% - 13px) 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
+  select.stage:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .stage-flow{display:flex;gap:.3rem;flex-wrap:wrap;flex:1;min-width:200px;}
+  .sflag{font-size:.72rem;padding:.25rem .55rem;border-radius:100px;border:1px solid var(--line);color:var(--ink-faint);background:var(--surface);white-space:nowrap;display:inline-flex;gap:.35rem;align-items:center;}
+  .sflag.on{border-color:var(--accent);color:var(--ink);background:var(--accent-soft);font-weight:600;}
+  .sflag .mini{font-family:var(--mono);font-size:.6rem;opacity:.7;}
+  .sflag.complete{border-color:color-mix(in srgb,var(--good) 45%,var(--line));}
+  .sflag.complete::before{content:"✓";color:var(--good);}
+
+  .prog-wrap{max-width:1200px;margin:0 auto;padding:.4rem 1.1rem 0;}
+  .prog-track{height:6px;background:var(--surface-2);border-radius:100px;overflow:hidden;}
+  .prog-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-deep));border-radius:100px;transition:width .35s ease;}
+  .prog-meta{display:flex;justify-content:space-between;margin-top:.35rem;font-family:var(--mono);font-size:.68rem;color:var(--ink-faint);}
+
+  .substep{max-width:1200px;margin:0 auto;padding:.7rem 1.1rem .2rem;display:flex;gap:.4rem;overflow-x:auto;}
+  .step{flex:none;display:flex;align-items:center;gap:.4rem;padding:.35rem .65rem;border-radius:100px;border:1px solid var(--line);background:var(--surface);font-size:.76rem;color:var(--ink-soft);white-space:nowrap;}
+  .step .num{width:1.1rem;height:1.1rem;border-radius:50%;background:var(--surface-2);color:var(--ink-faint);display:grid;place-items:center;font-family:var(--mono);font-size:.62rem;font-weight:700;}
+  .step.active{border-color:var(--accent);color:var(--ink);background:var(--accent-soft);}
+  .step.active .num{background:var(--accent);color:#fff;}
+  .step.done .num{background:var(--good);color:#fff;font-size:0;}
+  .step.done .num::after{content:"✓";font-size:.62rem;}
+
+  .main{max-width:1200px;margin:0 auto;padding:1rem 1.1rem 3rem;display:grid;grid-template-columns:1fr 410px;gap:1.3rem;align-items:start;}
+  @media (max-width:900px){.main{grid-template-columns:1fr;}}
+
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1.4rem;}
+  .sec-eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin:0 0 .35rem;}
+  .sec-title{font-size:1.3rem;letter-spacing:-.01em;margin:0 0 .35rem;text-wrap:balance;}
+  .sec-intro{color:var(--ink-soft);font-size:.93rem;margin:0 0 1.1rem;}
+
+  .q{padding:1rem 0;border-top:1px solid var(--line);}
+  .q:first-of-type{border-top:0;padding-top:.1rem;}
+  .q-label{font-weight:600;font-size:.97rem;margin:0 0 .15rem;display:flex;gap:.5rem;align-items:baseline;}
+  .q-req{color:var(--accent);font-size:.68rem;font-family:var(--mono);}
+  .q-tag{color:var(--warn);font-size:.62rem;font-family:var(--mono);border:1px solid color-mix(in srgb,var(--warn) 40%,var(--line));border-radius:5px;padding:.05rem .3rem;text-transform:uppercase;letter-spacing:.05em;}
+  .q-help{color:var(--ink-faint);font-size:.82rem;margin:0 0 .55rem;}
+  .q-field{position:relative;}
+  textarea,input.txt{width:100%;background:var(--sunk);border:1px solid var(--line);border-radius:9px;padding:.6rem .75rem;color:var(--ink);font-size:.92rem;resize:vertical;}
+  textarea{min-height:70px;line-height:1.5;}
+  textarea:focus,input.txt:focus{outline:2px solid var(--accent);outline-offset:-1px;}
+  .with-mic textarea,.with-mic input.txt{padding-right:2.5rem;}
+  .mic{position:absolute;top:.45rem;right:.45rem;width:1.85rem;height:1.85rem;border-radius:7px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;font-size:.85rem;padding:0;}
+  .mic:hover{border-color:var(--accent);}
+  .mic.rec{background:var(--danger);border-color:var(--danger);color:#fff;animation:pulse 1s infinite;}
+  @keyframes pulse{50%{opacity:.5;}}
+
+  .opts{display:flex;flex-wrap:wrap;gap:.5rem;}
+  .opt{border:1px solid var(--line);background:var(--sunk);border-radius:100px;padding:.4rem .8rem;font-size:.84rem;color:var(--ink-soft);user-select:none;}
+  .opt:hover{border-color:var(--accent);}
+  .opt.sel{background:var(--accent-soft);border-color:var(--accent);color:var(--ink);font-weight:600;}
+  .opt.sel::before{content:"✓ ";color:var(--accent);}
+
+  .nav{display:flex;justify-content:space-between;gap:.7rem;margin-top:1.3rem;padding-top:1rem;border-top:1px solid var(--line);}
+
+  .tasks{display:flex;flex-direction:column;gap:.55rem;margin-top:.4rem;}
+  .task{display:grid;grid-template-columns:auto 1fr auto auto;gap:.55rem;align-items:center;background:var(--sunk);border:1px solid var(--line);border-radius:9px;padding:.5rem .6rem;}
+  .task input.tt{background:transparent;border:0;color:var(--ink);font-size:.9rem;width:100%;padding:.15rem;}
+  .task input.tt:focus{outline:none;}
+  .task.done input.tt{text-decoration:line-through;color:var(--ink-faint);}
+  .chk{width:1.3rem;height:1.3rem;border-radius:6px;border:1.5px solid var(--line);background:var(--surface);display:grid;place-items:center;flex:none;padding:0;font-size:.8rem;color:transparent;}
+  .chk.on{background:var(--good);border-color:var(--good);color:#fff;}
+  .prio{background:var(--surface);border:1px solid var(--line);border-radius:6px;color:var(--ink-soft);font-size:.74rem;padding:.25rem .35rem;}
+  .del{border:0;background:transparent;color:var(--ink-faint);font-size:1rem;padding:.1rem .35rem;border-radius:6px;}
+  .del:hover{color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent);}
+  .addrow{margin-top:.7rem;}
+
+  .cgroup{margin-top:1.1rem;}
+  .cgroup h4{margin:0 0 .5rem;font-size:.98rem;display:flex;align-items:center;gap:.5rem;}
+  .cgroup h4 .tally{font-family:var(--mono);font-size:.68rem;color:var(--ink-faint);font-weight:500;}
+  .cgroup h4 .badge{font-family:var(--mono);font-size:.6rem;color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 40%,var(--line));border-radius:5px;padding:.05rem .3rem;text-transform:uppercase;}
+  .citem{display:flex;gap:.6rem;align-items:flex-start;padding:.5rem 0;border-top:1px solid var(--line);cursor:pointer;}
+  .citem:first-of-type{border-top:0;}
+  .citem span{font-size:.9rem;color:var(--ink-soft);}
+  .citem.on span{color:var(--ink);}
+
+  .note-block{margin-top:1.3rem;padding-top:1.1rem;border-top:1px solid var(--line);}
+  .note-block .q-label{margin-bottom:.4rem;}
+
+  .preview{position:sticky;top:150px;}
+  @media (max-width:900px){.preview{position:static;}}
+  .pv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem;gap:.5rem;}
+  .pv-head h3{margin:0;font-size:.8rem;font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);}
+  .pv-body{background:var(--sunk);border:1px solid var(--line);border-radius:var(--radius);padding:1.1rem 1.2rem;max-height:68vh;overflow:auto;font-size:.85rem;}
+  .pv-title{font-size:1.05rem;font-weight:800;letter-spacing:-.01em;margin:0 0 .1rem;}
+  .pv-stamp{font-family:var(--mono);font-size:.65rem;color:var(--ink-faint);margin-bottom:.7rem;}
+  .pv-stage{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:var(--accent);display:inline-block;padding:.15rem .5rem;border-radius:5px;margin:1rem 0 .4rem;}
+  .pv-stage:first-of-type{margin-top:0;}
+  .pv-sub{font-weight:700;color:var(--ink);margin:.7rem 0 .2rem;font-size:.8rem;}
+  .pv-q{font-weight:600;color:var(--ink);margin:.45rem 0 .03rem;font-size:.8rem;}
+  .pv-a{color:var(--ink-soft);white-space:pre-wrap;font-size:.83rem;}
+  .pv-li{color:var(--ink-soft);font-size:.83rem;margin:.1rem 0;}
+  .pv-empty{color:var(--ink-faint);font-style:italic;font-size:.85rem;}
+
+  .toast{position:fixed;bottom:1.1rem;left:50%;transform:translateX(-50%) translateY(160%);background:var(--ink);color:var(--paper);padding:.65rem 1rem;border-radius:9px;font-size:.85rem;box-shadow:0 8px 30px rgba(0,0,0,.28);transition:transform .3s ease;z-index:50;max-width:90vw;text-align:center;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  .toast.err{background:var(--danger);color:#fff;}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand"><span class="dot">🗺️</span> Atlas Studio <small>spec → ship</small></div>
+    <div class="proj"><input id="projName" type="text" placeholder="Name this project…" autocomplete="off"></div>
+    <select class="ptype" id="ptypeSel" title="Project type — reshapes the stages"></select>
+    <div class="tb-actions">
+      <span class="saved" id="savedTag">saved</span>
+      <button class="btn ghost small" id="resetBtn">Reset</button>
+      <button class="btn small" id="copyBtn">Copy</button>
+      <button class="btn primary small" id="dlBtn">Download</button>
+    </div>
+  </div>
+  <div class="stagebar">
+    <div class="stage-pick">
+      <label for="stageSel">Stage</label>
+      <select class="stage" id="stageSel"></select>
+    </div>
+    <div class="stage-flow" id="stageFlow"></div>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+    <div class="prog-meta"><span id="progLabel">0% complete</span><span id="progCount">0 / 0</span></div>
+  </div>
+  <div class="substep" id="substep"></div>
+</div>
+
+<div class="main">
+  <div class="panel" id="panel"></div>
+  <div class="preview">
+    <div class="pv-head"><h3>Live spec</h3><span class="saved" id="micNote"></span></div>
+    <div class="pv-body" id="pvBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  const TYPES=[
+    {v:"website",l:"Website"},{v:"webapp",l:"Web app"},{v:"mobile",l:"Mobile app"},
+    {v:"api",l:"API / service"},{v:"automation",l:"Automation / agent"}
+  ];
+  const typeLabel=v=>(TYPES.find(t=>t.v===v)||{}).l||v;
+
+  // ---------- PRD interview sections ----------
+  const PRD_SECTIONS = [
+    { id:"overview", title:"Vision & Problem", eyebrow:"Why it exists",
+      intro:"Start with the pain, not the feature. If we can't name what breaks without this, we shouldn't build it.",
+      questions:[
+        {id:"one_liner", q:"In one sentence, what is this?", type:"short", req:true, ph:"A robot that watches our servers and tells us what changed."},
+        {id:"problem", q:"What problem does it solve, and who feels the pain?", type:"long", req:true, help:"Be concrete. Whose day gets worse without it?"},
+        {id:"cost_of_nothing", q:"What happens if we DON'T build it?", type:"long", help:"Missed sites, wasted hours, lost sales."},
+        {id:"new_or_enhance", q:"Brand-new, or enhancing something we have?", type:"single", options:["Brand-new","Enhancing existing","Replacing something"]},
+        {id:"existing_ref", q:"If enhancing/replacing — what exists today and where?", type:"long", showIf:{q:"new_or_enhance", in:["Enhancing existing","Replacing something"]}, help:"Point at the real thing so we don't build a disconnected copy."},
+      ]},
+    { id:"users", title:"Users & Jobs", eyebrow:"Who it's for",
+      intro:"A feature nobody's job needs is decoration. Name the people and the job to be done.",
+      questions:[
+        {id:"primary_user", q:"Who is the primary user?", type:"short", req:true, ph:"You (owner) · a build-agent · a client"},
+        {id:"job", q:"What job are they hiring this to do?", type:"long", req:true, help:"'When ___, I want to ___, so I can ___.'"},
+        {id:"scenarios", q:"Top 2–3 real moments it gets used", type:"long"},
+        {id:"others_affected", q:"Who else is affected downstream?", type:"long"},
+      ]},
+    { id:"scope", title:"Scope & Non-goals", eyebrow:"In and out",
+      intro:"Half of a good spec is what it will NOT do.",
+      questions:[
+        {id:"must_outcomes", q:"Must-have outcomes — what does 'done' mean?", type:"long", req:true, help:"Outcomes, not features."},
+        {id:"non_goals", q:"Explicitly OUT of scope", type:"long", req:true, help:"What people will assume it does but it won't."},
+        {id:"mvp_hint", q:"Smallest version that proves it works?", type:"long", help:"You'll go deeper in the MVP stage."},
+      ]},
+    { id:"function", title:"Functionality", eyebrow:"What it does",
+      intro:"The behaviour — including the messy parts.",
+      questions:[
+        {id:"core_caps", q:"Core capabilities", type:"multi", options:["Discover / scan","Store / catalog","Detect changes","Send reports","Answer queries","Build / generate","Benchmark / research","Automate on a schedule"], help:"Pick all that apply."},
+        {id:"main_flow", q:"Walk the main flow, step by step", type:"long", req:true, help:"Trigger → result. Number the steps. Try 'WHEN… THEN…'."},
+        {id:"edge_cases", q:"What could go wrong, and what happens then?", type:"long", help:"Empty results, failures, conflicts, duplicates."},
+      ]},
+    { id:"connections", title:"Connections & Dependencies", eyebrow:"Nothing floats",
+      intro:"Where 'simple disconnected versions' get caught. Force every wire into the open.",
+      questions:[
+        {id:"reads_from", q:"What does it READ from?", type:"long", req:true, help:"Servers, repos, APIs, the catalog, other agents."},
+        {id:"writes_to", q:"What does it WRITE to or trigger?", type:"long"},
+        {id:"depends_on", q:"What must already exist for this to work?", type:"long"},
+        {id:"breaks_if", q:"What breaks it if a dependency changes?", type:"long"},
+      ]},
+    { id:"data", title:"Data & Privacy", eyebrow:"What it holds",
+      intro:"Where data lives and how long it stays is a decision, not an afterthought.",
+      questions:[
+        {id:"data_kinds", q:"What data does it handle?", type:"long", help:"Configs, code paths, client info, credentials?"},
+        {id:"storage", q:"Where is it stored?", type:"single", options:["Git repo (text)","Database","Both","Not sure yet"], help:"Default for a catalog is git text — diffable, AI-readable."},
+        {id:"retention", q:"How long is it kept?", type:"short"},
+        {id:"sensitive", q:"Any sensitive / regulated data?", type:"multi", options:["None","Personal data","Financial","Health","Credentials","Client-confidential"]},
+        {id:"compliance", q:"Which standards or policies apply?", type:"long", showIf:{q:"sensitive", inAny:["Personal data","Financial","Health","Credentials","Client-confidential"]}, help:"GDPR, data-retention policy, financial-app enhanced security."},
+      ]},
+    { id:"automation", title:"Automation & Triggers", eyebrow:"Runs itself",
+      intro:"If it's autopilot, define exactly what wakes it and what it does unattended.",
+      questions:[
+        {id:"is_auto", q:"Does it run automatically?", type:"single", req:true, options:["Yes — fully autopilot","Partly — I trigger it","No — manual only"]},
+        {id:"triggers", q:"What wakes it?", type:"long", showIf:{q:"is_auto", in:["Yes — fully autopilot","Partly — I trigger it"]}, help:"A schedule (how often?), a git push, a deploy, a new folder…"},
+        {id:"unattended", q:"What may it do WITHOUT asking me?", type:"long", showIf:{q:"is_auto", in:["Yes — fully autopilot","Partly — I trigger it"]}, help:"The line between 'just do it' and 'ask first'."},
+        {id:"staleness", q:"How does it treat things that AREN'T changing?", type:"long", showIf:{q:"is_auto", in:["Yes — fully autopilot","Partly — I trigger it"]}, help:"Stale ≠ nothing to report. Archive? Security risk? Dead asset?"},
+      ]},
+    { id:"ai", title:"AI & Models", eyebrow:"Where it thinks",
+      intro:"Spend model cost only where judgment is needed; compute the rest for free.",
+      questions:[
+        {id:"uses_ai", q:"Does it use an AI model?", type:"single", req:true, options:["Yes","No"]},
+        {id:"ai_tasks", q:"Which tasks actually need a model?", type:"long", showIf:{q:"uses_ai", in:["Yes"]}, help:"Judgment, writing, synthesis — not what a script can compute."},
+        {id:"tiering", q:"Cheap-vs-strong split — what runs on which?", type:"long", showIf:{q:"uses_ai", in:["Yes"]}, help:"Cheap/always-on for watching; strong only when building."},
+        {id:"ai_fallback", q:"What if the model is wrong or unavailable?", type:"long", showIf:{q:"uses_ai", in:["Yes"]}},
+      ]},
+    { id:"reporting", title:"Reporting & Output", eyebrow:"Who hears about it",
+      intro:"'Send a report' is many reports. Split by audience, urgency, and whether a human must act.",
+      questions:[
+        {id:"who_receives", q:"Who receives output, by what channel?", type:"long", req:true, help:"You by email? An agent by query? A client dashboard?"},
+        {id:"push_pull", q:"Push or pull?", type:"single", options:["Push (it comes to me)","Pull (I / agents fetch it)","Both"]},
+        {id:"priority", q:"How is it ordered / prioritized?", type:"long", help:"By cost-of-ignoring: security → revenue gaps → hygiene."},
+        {id:"needs_review", q:"What needs MY review vs. runs silently?", type:"long", help:"Make my decision binary — approve / skip."},
+      ]},
+    { id:"benchmark", title:"Benchmark & Differentiation", eyebrow:"Become the best",
+      intro:"Don't copy — benchmark and beat. Every recommendation carries its 'why'.",
+      questions:[
+        {id:"competitors", q:"Who do we benchmark against? Real names.", type:"long", req:true, help:"2–3 competitors. Vague in = vague out."},
+        {id:"they_do_better", q:"What do they do better than us today?", type:"long"},
+        {id:"our_gap", q:"What gap does this close — how do we win, not match?", type:"long"},
+        {id:"revenue", q:"Where's the money / sales angle?", type:"long", help:"Missing funnel, weak conversion, something to sell."},
+      ]},
+    { id:"success", title:"Success & Metrics", eyebrow:"How we'll know",
+      intro:"If we can't measure it, we can't tell if it worked. No vague goals — a number, a threshold, or an artifact.",
+      questions:[
+        {id:"success_looks", q:"What does success look like — in numbers?", type:"long", req:true, help:"'100% of sites mapped', '0 unbacked-up', 'loads < 2s on 4G'."},
+        {id:"failure_looks", q:"What would tell us it's failing?", type:"long"},
+      ]},
+  ];
+
+  // ---------- full lifecycle stages (type-aware via .types / showForType) ----------
+  const STAGES = [
+    { id:"principles", name:"Principles", kind:"interview", short:"the rules",
+      blurb:"Set once. The non-negotiables every project inherits — a 'constitution' (spec-kit's idea).",
+      sections:[{ id:"prin", title:"Principles", eyebrow:"Constitution", intro:"The standing rules Atlas and every build agent must follow.",
+        questions:[
+          {id:"prin_values", q:"Non-negotiable principles for our work", type:"long", req:true, help:"reuse before build · cheap-model default · benchmark, don't copy."},
+          {id:"prin_quality", q:"Our quality bar", type:"long", help:"Tests, security, accessibility, performance standards we always meet."},
+          {id:"prin_stack", q:"Preferred stack & standards to reuse", type:"long", help:"The defaults so we stop reinventing."},
+          {id:"prin_never", q:"Things we NEVER do", type:"long", help:"Hard lines — no un-backed-up deploys, no secrets in git…"},
+        ]}]},
+    { id:"prd", name:"PRD", kind:"interview", short:"what & why",
+      blurb:"The deep spec — the 'what' and 'why', branching as you answer. The heart of the doc.",
+      sections: PRD_SECTIONS },
+    { id:"ux", name:"UX & Flow", kind:"interview", short:"the experience",
+      blurb:"Design the experience before any code — screens, flows, states. Adapts for mobile.",
+      sections:[{ id:"ux1", title:"User Experience & Flow", eyebrow:"Design first", intro:"Feed this from the PRD. What the user sees and does — before we build it.",
+        questions:[
+          {id:"screens", q:"What are the main screens or pages?", type:"long", req:true, help:"List them — home, dashboard, settings, checkout…"},
+          {id:"happy_flow", q:"Walk the happy-path flow, screen to screen", type:"long", req:true, help:"Entry → the key action → done. Number the steps."},
+          {id:"key_ui", q:"Key interactions & components", type:"long", help:"Forms, tables, dashboards, wizards, uploads…"},
+          {id:"ui_states", q:"Empty, loading, error & success states", type:"long", help:"The states most builds forget — name them now."},
+          {id:"device_targets", q:"Target devices & OS versions", type:"long", showForType:["mobile"], help:"iPhone/Android sizes, min OS, tablets?"},
+          {id:"mobile_native", q:"Gestures, offline behaviour & push notifications", type:"long", showForType:["mobile"], help:"Swipe/long-press, what works offline, when it notifies."},
+          {id:"visual_dir", q:"Visual direction & references", type:"long", help:"Brand, a product you admire, or a prompt for v0.dev / Figma."},
+          {id:"a11y_resp", q:"Accessibility & responsive needs", type:"long", help:"Mobile-first? Keyboard? Contrast?"},
+        ]}]},
+    { id:"mvp", name:"MVP", kind:"interview", short:"smallest slice",
+      blurb:"Scope down to the smallest thing that tests the idea — ship fast, don't build a big thing nobody wants.",
+      sections:[{ id:"mvp1", title:"MVP Concept & Test", eyebrow:"Minimum viable", intro:"The riskiest assumption, the smallest build that tests it, and how we'll know it worked.",
+        questions:[
+          {id:"hypothesis", q:"What's the core hypothesis this MVP tests?", type:"long", req:true, help:"'If we offer X, users will do Y.' The bet worth validating."},
+          {id:"mvp_features", q:"The 1–3 features that MUST be in the MVP", type:"long", req:true, help:"Only what's needed to test the hypothesis. Nothing else."},
+          {id:"cut_list", q:"What are we explicitly CUTTING from v1?", type:"long", req:true, help:"The discipline that ships fast. Say no out loud."},
+          {id:"success_signal", q:"What measurable result proves the hypothesis?", type:"long", req:true, help:"A number/threshold — e.g. '20% of trials convert'. No vague goals."},
+          {id:"test_plan", q:"How will we test it — who tries it, what do we measure?", type:"long", help:"The test plan: real users, the metric, how long."},
+          {id:"timebox", q:"Timebox — how long to build the MVP?", type:"short", help:"A ceiling keeps scope honest."},
+        ]}]},
+    { id:"planning", name:"Planning", kind:"interview", short:"the how",
+      blurb:"The technical 'how' — informed by the UX and MVP scope. (spec-kit /plan · OpenSpec design.md)",
+      sections:[{ id:"plan", title:"Technical Plan", eyebrow:"The how", intro:"Turn the what, the experience, and the MVP scope into an approach an engineer (or agent) can execute.",
+        questions:[
+          {id:"stack", q:"Stack & hosting", type:"long", req:true, help:"Languages, frameworks, where it runs."},
+          {id:"architecture", q:"Architecture — the main pieces and how they talk", type:"long", req:true, help:"Components, data flow. A rough diagram in words is fine."},
+          {id:"data_model", q:"Key data entities / tables", type:"long"},
+          {id:"integrations_plan", q:"External services, APIs, MCP connectors", type:"long"},
+          {id:"security_plan", q:"Auth, secrets, and compliance controls", type:"long", help:"How the Data & Privacy answers get enforced."},
+          {id:"sequence", q:"Build order / milestones", type:"long", help:"What ships first, then next — each slice standalone."},
+          {id:"tech_risks", q:"Technical risks & unknowns", type:"long"},
+        ]}]},
+    { id:"building", name:"Building", kind:"tasklist", short:"stories",
+      blurb:"Break the plan into small stories, each with a done flag — the Ralph loop: ship until all pass.",
+      seed:[
+        {title:"Set up repo, environment & CI", prio:"P1"},
+        {title:"Implement core happy-path flow", prio:"P1"},
+        {title:"Handle the edge cases from the PRD", prio:"P2"},
+        {title:"Wire up data storage & migrations", prio:"P1"},
+        {title:"Tests pass + typecheck green", prio:"P1"},
+      ]},
+    { id:"store", name:"Store Readiness", kind:"interview", short:"app store", types:["mobile"],
+      blurb:"The mobile-only stage: everything the App Store / Play Store needs before you can publish.",
+      sections:[{ id:"store1", title:"App Store & Play Store", eyebrow:"Publish-ready", intro:"The listing and assets that gate a mobile launch — the part web builds never need.",
+        questions:[
+          {id:"platforms", q:"Platforms & stores", type:"single", req:true, options:["iOS (App Store)","Android (Play Store)","Both"]},
+          {id:"app_identity", q:"App name, subtitle & keywords (ASO)", type:"long", req:true, help:"The name, the one-line subtitle, and search keywords."},
+          {id:"store_desc", q:"Store description", type:"long", req:true, help:"What sells it on the listing page."},
+          {id:"assets", q:"Visual assets", type:"long", help:"App icon, screenshots per device size, feature graphic, preview video."},
+          {id:"rating_cat", q:"Category & age/content rating", type:"short"},
+          {id:"privacy_labels", q:"Privacy labels — what data is collected & why", type:"long", req:true, help:"Apple privacy nutrition labels / Play Data safety."},
+          {id:"signing", q:"Signing, build & test track", type:"long", help:"Certificates, TestFlight / Play internal testing, release channel."},
+        ]}]},
+    { id:"launching", name:"Launching", kind:"checklist", short:"pre-flight",
+      blurb:"The pre-launch gate. Nothing ships red. Adapts by project type.",
+      groups:[
+        {title:"Quality", items:[
+          {id:"q_tests", label:"Tests & typecheck pass"},
+          {id:"q_console", label:"No console / runtime errors"},
+          {id:"q_responsive", label:"Responsive on all target sizes"},
+          {id:"q_errstates", label:"Error & empty states handled"},
+        ]},
+        {title:"Security", items:[
+          {id:"s_secrets", label:"No secrets in the repo"},
+          {id:"s_auth", label:"Auth & access enforced"},
+          {id:"s_inputs", label:"Inputs validated / sanitized"},
+          {id:"s_https", label:"HTTPS / SSL or secure transport"},
+          {id:"s_deps", label:"Dependencies scanned"},
+        ]},
+        {title:"SEO & Performance", types:["website","webapp"], items:[
+          {id:"p_meta", label:"Meta tags, titles, Open Graph"},
+          {id:"p_sitemap", label:"Sitemap & robots.txt"},
+          {id:"p_vitals", label:"Core Web Vitals in the green"},
+          {id:"p_images", label:"Images optimized"},
+        ]},
+        {title:"App Store", types:["mobile"], items:[
+          {id:"m_guidelines", label:"Passes store review guidelines"},
+          {id:"m_listing", label:"Store listing & metadata complete"},
+          {id:"m_shots", label:"Screenshots for all required device sizes"},
+          {id:"m_privacy", label:"Privacy labels accurate"},
+          {id:"m_devices", label:"Tested on real devices"},
+          {id:"m_crash", label:"Crash-free rate acceptable"},
+          {id:"m_signing", label:"Signing & certificates valid"},
+        ]},
+        {title:"API contract", types:["api"], items:[
+          {id:"ap_docs", label:"API documented (OpenAPI)"},
+          {id:"ap_versioned", label:"Versioning & deprecation policy"},
+          {id:"ap_rate", label:"Rate limiting & auth keys"},
+        ]},
+        {title:"Content & Legal", items:[
+          {id:"l_privacy", label:"Privacy policy"},
+          {id:"l_terms", label:"Terms of service"},
+          {id:"l_cookie", label:"Cookie / tracking consent (privacy-first)"},
+          {id:"l_retention", label:"Data-retention page (per app type)"},
+        ]},
+        {title:"Ops & Atlas", items:[
+          {id:"o_backup", label:"Backups configured & verified"},
+          {id:"o_inventory", label:"Added to Atlas inventory"},
+          {id:"o_monitor", label:"Monitoring & alerts on"},
+          {id:"o_rollback", label:"Rollback plan ready"},
+        ]},
+      ]},
+    { id:"golive", name:"Go-live", kind:"checklist", short:"go / no-go",
+      blurb:"The final gate and what happens after — hand off to Atlas to watch & benchmark.",
+      groups:[
+        {title:"Go / No-go", items:[
+          {id:"g_green", label:"All launch checks green"},
+          {id:"g_approved", label:"Owner sign-off"},
+          {id:"g_dns", label:"Domain / DNS live", types:["website","webapp","api"]},
+          {id:"g_published", label:"Approved & published to store", types:["mobile"]},
+          {id:"g_analytics", label:"Analytics & conversion tracking live"},
+        ]},
+        {title:"After launch (Atlas takes over)", items:[
+          {id:"a_watch", label:"Atlas watching for drift"},
+          {id:"a_bench", label:"Competitor benchmark scheduled"},
+          {id:"a_promote", label:"Reusable parts promoted to the catalog"},
+          {id:"a_report", label:"First health report to my email"},
+        ]},
+      ]},
+  ];
+
+  const stageById = id => STAGES.find(s=>s.id===id);
+  const visStages = () => STAGES.filter(s=>!s.types || s.types.indexOf(state.ptype)>=0);
+  const typeOk = o => !o.types || o.types.indexOf(state.ptype)>=0;
+  const visGroups = st => st.groups.filter(typeOk);
+  const visItems = g => g.items.filter(typeOk);
+
+  // ---------- state ----------
+  const KEY = "atlas-studio-v2";
+  let state = { proj:"", ptype:"website", stage:"prd", sec:{}, answers:{}, tasks:null, checks:{}, notes:{}, _tid:1 };
+  try { const s=JSON.parse(localStorage.getItem(KEY)||"null"); if(s) state=Object.assign(state,s); } catch(e){}
+  if(!state.tasks){ state.tasks = stageById("building").seed.map(t=>({id:state._tid++, title:t.title, prio:t.prio, done:false})); }
+
+  const $ = s=>document.querySelector(s);
+  const esc = t=>(t==null?"":String(t)).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+    const tag=$("#savedTag"); tag.textContent="saved ✓"; tag.style.color="var(--good)";
+    clearTimeout(save._t); save._t=setTimeout(()=>{tag.textContent="saved";tag.style.color="";},1100);
+  }
+
+  function showIfOk(q){
+    if(q.showForType && q.showForType.indexOf(state.ptype)<0) return false;
+    if(!q.showIf) return true;
+    const v=state.answers[q.showIf.q];
+    if(q.showIf.in) return q.showIf.in.indexOf(v)>=0;
+    if(q.showIf.inAny){ const a=Array.isArray(v)?v:(v?[v]:[]); return q.showIf.inAny.some(x=>a.indexOf(x)>=0); }
+    return true;
+  }
+  const visQs = sec => sec.questions.filter(showIfOk);
+  function answered(q){ const v=state.answers[q.id]; return Array.isArray(v)?v.length>0:(v!=null&&String(v).trim()!==""); }
+
+  // ---------- progress ----------
+  function stageProg(st){
+    if(st.kind==="interview"){ let t=0,d=0; st.sections.forEach(s=>visQs(s).forEach(q=>{t++;if(answered(q))d++;})); return {d,t}; }
+    if(st.kind==="tasklist"){ return {d:state.tasks.filter(x=>x.done).length, t:state.tasks.length}; }
+    if(st.kind==="checklist"){ let t=0,d=0; visGroups(st).forEach(g=>visItems(g).forEach(i=>{t++;if(state.checks[i.id])d++;})); return {d,t}; }
+    return {d:0,t:0};
+  }
+  function renderProgress(){
+    let d=0,t=0; visStages().forEach(s=>{const p=stageProg(s); d+=p.d; t+=p.t;});
+    const pct=t?Math.round(d/t*100):0;
+    $("#progFill").style.width=pct+"%"; $("#progLabel").textContent=pct+"% complete"; $("#progCount").textContent=d+" / "+t;
+  }
+
+  // ---------- top selectors ----------
+  function renderPtype(){
+    $("#ptypeSel").innerHTML=TYPES.map(t=>`<option value="${t.v}"${t.v===state.ptype?" selected":""}>${esc(t.l)}</option>`).join("");
+  }
+  function renderStageBar(){
+    const vs=visStages();
+    $("#stageSel").innerHTML=vs.map((s,i)=>`<option value="${s.id}"${s.id===state.stage?" selected":""}>${i+1}. ${esc(s.name)} — ${esc(s.short)}</option>`).join("");
+    $("#stageFlow").innerHTML=vs.map(s=>{
+      const p=stageProg(s); const full=p.t>0&&p.d===p.t;
+      return `<button class="sflag${s.id===state.stage?" on":""}${full?" complete":""}" data-stage="${s.id}">${esc(s.name)}<span class="mini">${p.d}/${p.t}</span></button>`;
+    }).join("");
+    $("#stageFlow").querySelectorAll("[data-stage]").forEach(b=>b.onclick=()=>{state.stage=b.dataset.stage;save();render();});
+  }
+
+  // ---------- interview ----------
+  function fieldHTML(q){
+    const v=state.answers[q.id];
+    if(q.type==="single"||q.type==="multi"){
+      const sel=q.type==="multi"?(Array.isArray(v)?v:[]):(v?[v]:[]);
+      return `<div class="opts" data-qid="${q.id}" data-multi="${q.type==="multi"}">`+
+        q.options.map(o=>`<span class="opt${sel.indexOf(o)>=0?" sel":""}" data-val="${esc(o)}">${esc(o)}</span>`).join("")+`</div>`;
+    }
+    const tag=q.type==="long"?`<textarea class="q-in" data-qid="${q.id}" placeholder="${esc(q.ph||"")}">${esc(v||"")}</textarea>`
+                             :`<input class="q-in txt" type="text" data-qid="${q.id}" placeholder="${esc(q.ph||"")}" value="${esc(v||"")}">`;
+    return `<div class="q-field with-mic">${tag}<button class="mic" data-mic="${q.id}" title="Speak your answer" aria-label="Speak your answer">🎤</button></div>`;
+  }
+  function renderInterview(st){
+    const idx=state.sec[st.id]||0; const sec=st.sections[Math.min(idx,st.sections.length-1)];
+    const qs=visQs(sec);
+    $("#panel").innerHTML=
+      `<p class="sec-eyebrow">${esc(sec.eyebrow)} · ${st.sections.length>1?("Section "+(idx+1)+" of "+st.sections.length):esc(st.name)}</p>`+
+      `<h2 class="sec-title">${esc(sec.title)}</h2><p class="sec-intro">${esc(sec.intro)}</p>`+
+      qs.map(q=>`<div class="q"><div class="q-label">${esc(q.q)}${q.req?'<span class="q-req">required</span>':''}${q.showForType?'<span class="q-tag">mobile</span>':''}</div>`+
+        (q.help?`<p class="q-help">${esc(q.help)}</p>`:"")+fieldHTML(q)+`</div>`).join("")+
+      (st.sections.length>1?`<div class="nav">`+
+        `<button class="btn ghost" id="secBack" ${idx===0?"disabled style=opacity:.4":""}>← Back</button>`+
+        (idx===st.sections.length-1?`<span class="saved">end of ${esc(st.name)} — pick the next stage above</span>`:`<button class="btn primary" id="secNext">Next →</button>`)+
+      `</div>`:"");
+    wireInterview(st,idx);
+  }
+  function wireInterview(st,idx){
+    const p=$("#panel");
+    p.querySelectorAll(".q-in").forEach(inp=>inp.addEventListener("input",()=>{state.answers[inp.dataset.qid]=inp.value;save();renderPreview();renderProgress();renderStageBar();}));
+    p.querySelectorAll(".opts").forEach(box=>{
+      const multi=box.dataset.multi==="true";
+      box.querySelectorAll(".opt").forEach(opt=>opt.onclick=()=>{
+        const qid=box.dataset.qid,val=opt.dataset.val;
+        if(multi){let a=Array.isArray(state.answers[qid])?state.answers[qid].slice():[];const i=a.indexOf(val);i>=0?a.splice(i,1):a.push(val);state.answers[qid]=a;}
+        else state.answers[qid]=state.answers[qid]===val?"":val;
+        save();renderInterview(st);renderStageBar();renderPreview();renderProgress();
+      });
+    });
+    p.querySelectorAll(".mic").forEach(m=>m.onclick=()=>startVoice(m.dataset.mic,m,()=>renderInterview(st)));
+    const b=$("#secBack"); if(b) b.onclick=()=>{state.sec[st.id]=idx-1;save();renderInterview(st);};
+    const n=$("#secNext"); if(n) n.onclick=()=>{state.sec[st.id]=idx+1;save();renderInterview(st);};
+  }
+
+  // ---------- tasklist ----------
+  function renderTasklist(st){
+    const rows=state.tasks.map(t=>
+      `<div class="task${t.done?" done":""}" data-id="${t.id}">`+
+        `<button class="chk${t.done?" on":""}" data-chk="${t.id}" aria-label="toggle done">✓</button>`+
+        `<input class="tt" data-tt="${t.id}" value="${esc(t.title)}" placeholder="Describe the story…">`+
+        `<select class="prio" data-prio="${t.id}">${["P1","P2","P3"].map(p=>`<option${p===t.prio?" selected":""}>${p}</option>`).join("")}</select>`+
+        `<button class="del" data-del="${t.id}" aria-label="delete">✕</button>`+
+      `</div>`).join("");
+    $("#panel").innerHTML=
+      `<p class="sec-eyebrow">Build loop</p><h2 class="sec-title">${esc(st.name)} — stories</h2>`+
+      `<p class="sec-intro">${esc(st.blurb)} Small, right-sized stories; flip each to done when tests pass.</p>`+
+      `<div class="tasks">${rows||'<p class="pv-empty">No stories yet — add one below.</p>'}</div>`+
+      `<div class="addrow"><button class="btn" id="addTask">＋ Add story</button></div>`+
+      noteBlock(st,"Progress log","Append learnings, gotchas, decisions as you build (Ralph's progress.txt).");
+    const p=$("#panel");
+    p.querySelectorAll("[data-chk]").forEach(b=>b.onclick=()=>{const t=state.tasks.find(x=>x.id==b.dataset.chk);t.done=!t.done;save();renderTasklist(st);renderStageBar();renderPreview();renderProgress();});
+    p.querySelectorAll("[data-tt]").forEach(i=>i.addEventListener("input",()=>{state.tasks.find(x=>x.id==i.dataset.tt).title=i.value;save();renderPreview();}));
+    p.querySelectorAll("[data-prio]").forEach(s=>s.onchange=()=>{state.tasks.find(x=>x.id==s.dataset.prio).prio=s.value;save();renderPreview();});
+    p.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{state.tasks=state.tasks.filter(x=>x.id!=b.dataset.del);save();renderTasklist(st);renderStageBar();renderPreview();renderProgress();});
+    $("#addTask").onclick=()=>{state.tasks.push({id:state._tid++,title:"",prio:"P2",done:false});save();renderTasklist(st);renderStageBar();renderProgress();};
+    wireNotes(st);
+  }
+
+  // ---------- checklist ----------
+  function renderChecklist(st){
+    const groups=visGroups(st).map(g=>{
+      const items=visItems(g); const d=items.filter(i=>state.checks[i.id]).length;
+      const badge=g.types?`<span class="badge">${esc(g.types.map(typeLabel).join("/"))}</span>`:"";
+      const rows=items.map(i=>`<div class="citem${state.checks[i.id]?" on":""}" data-cid="${i.id}"><button class="chk${state.checks[i.id]?" on":""}" aria-label="toggle">✓</button><span>${esc(i.label)}</span></div>`).join("");
+      return `<div class="cgroup"><h4>${esc(g.title)} ${badge}<span class="tally">${d}/${items.length}</span></h4>${rows}</div>`;
+    }).join("");
+    $("#panel").innerHTML=
+      `<p class="sec-eyebrow">Gate</p><h2 class="sec-title">${esc(st.name)}</h2><p class="sec-intro">${esc(st.blurb)}</p>`+
+      groups+noteBlock(st,"Notes","Anything blocking, or a go/no-go decision.");
+    $("#panel").querySelectorAll("[data-cid]").forEach(row=>row.onclick=()=>{const id=row.dataset.cid;state.checks[id]=!state.checks[id];save();renderChecklist(st);renderStageBar();renderPreview();renderProgress();});
+    wireNotes(st);
+  }
+
+  function noteBlock(st,label,help){
+    const v=state.notes[st.id]||"";
+    return `<div class="note-block"><div class="q-label">${esc(label)}</div><p class="q-help">${esc(help)}</p>`+
+      `<div class="q-field with-mic"><textarea class="note-in" data-note="${st.id}" placeholder="…">${esc(v)}</textarea>`+
+      `<button class="mic" data-micnote="${st.id}" title="Speak" aria-label="Speak">🎤</button></div></div>`;
+  }
+  function wireNotes(st){
+    const ta=$("#panel").querySelector(".note-in");
+    if(ta) ta.addEventListener("input",()=>{state.notes[st.id]=ta.value;save();renderPreview();});
+    const m=$("#panel").querySelector("[data-micnote]");
+    if(m) m.onclick=()=>startVoice(null,m,null,st.id);
+  }
+
+  // ---------- substep ----------
+  function renderSubstep(st){
+    const el=$("#substep");
+    if(st.kind!=="interview"||st.sections.length<=1){ el.innerHTML=""; el.style.display="none"; return; }
+    el.style.display="flex";
+    const idx=state.sec[st.id]||0;
+    el.innerHTML=st.sections.map((s,i)=>{
+      const done=visQs(s).length>0&&visQs(s).every(answered);
+      return `<button class="step${i===idx?" active":""}${done&&i!==idx?" done":""}" data-i="${i}"><span class="num">${i+1}</span>${esc(s.title)}</button>`;
+    }).join("");
+    el.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{state.sec[st.id]=+b.dataset.i;save();renderInterview(st);renderSubstep(st);});
+    const a=el.querySelector(".active"); if(a)a.scrollIntoView({block:"nearest",inline:"center"});
+  }
+
+  // ---------- preview ----------
+  function fmt(v){return Array.isArray(v)?v.join(", "):v;}
+  function renderPreview(){
+    const title=state.proj.trim()||"Untitled project";
+    let html=`<div class="pv-title">${esc(title)}</div><div class="pv-stamp">${esc(typeLabel(state.ptype))} · draft · ${esc(new Date().toLocaleString())}</div>`;
+    let any=false;
+    visStages().forEach(st=>{
+      let inner="";
+      if(st.kind==="interview"){
+        st.sections.forEach(sec=>{
+          const qs=visQs(sec).filter(answered); if(!qs.length)return;
+          if(st.sections.length>1) inner+=`<div class="pv-sub">${esc(sec.title)}</div>`;
+          qs.forEach(q=>inner+=`<div class="pv-q">${esc(q.q)}</div><div class="pv-a">${esc(fmt(state.answers[q.id]))}</div>`);
+        });
+      } else if(st.kind==="tasklist"){
+        const ts=state.tasks.filter(t=>t.title.trim());
+        if(ts.length) inner+=ts.map(t=>`<div class="pv-li">${t.done?"✅":"⬜"} <b>${esc(t.prio)}</b> ${esc(t.title)}</div>`).join("");
+      } else if(st.kind==="checklist"){
+        visGroups(st).forEach(g=>{
+          const on=visItems(g).filter(i=>state.checks[i.id]); if(!on.length)return;
+          inner+=`<div class="pv-sub">${esc(g.title)}</div>`+on.map(i=>`<div class="pv-li">✅ ${esc(i.label)}</div>`).join("");
+        });
+      }
+      const note=(state.notes[st.id]||"").trim();
+      if(note) inner+=`<div class="pv-sub">Notes</div><div class="pv-a">${esc(note)}</div>`;
+      if(inner){any=true; html+=`<div class="pv-stage">${esc(st.name)}</div>`+inner;}
+    });
+    if(!any) html+=`<p class="pv-empty">Your spec builds here across every stage as you go.</p>`;
+    $("#pvBody").innerHTML=html;
+  }
+
+  // ---------- export ----------
+  function buildMarkdown(){
+    const title=state.proj.trim()||"Untitled project";
+    let md=`# ${title}\n\n_Spec-to-ship document · ${typeLabel(state.ptype)} · generated ${new Date().toLocaleString()} · Atlas Studio_\n`;
+    visStages().forEach(st=>{
+      let body="";
+      if(st.kind==="interview"){
+        st.sections.forEach(sec=>{
+          const qs=visQs(sec).filter(answered); if(!qs.length)return;
+          if(st.sections.length>1) body+=`\n### ${sec.title}\n\n`;
+          qs.forEach(q=>{const v=state.answers[q.id]; body+=`**${q.q}**\n\n`; body+=Array.isArray(v)?v.map(x=>`- ${x}`).join("\n")+"\n\n":`${v}\n\n`;});
+        });
+      } else if(st.kind==="tasklist"){
+        const ts=state.tasks.filter(t=>t.title.trim());
+        if(ts.length) body+="\n"+ts.map(t=>`- [${t.done?"x":" "}] (${t.prio}) ${t.title}`).join("\n")+"\n";
+      } else if(st.kind==="checklist"){
+        visGroups(st).forEach(g=>{ body+=`\n### ${g.title}\n\n`+visItems(g).map(i=>`- [${state.checks[i.id]?"x":" "}] ${i.label}`).join("\n")+"\n"; });
+      }
+      const note=(state.notes[st.id]||"").trim();
+      if(note) body+=`\n_Notes:_ ${note}\n`;
+      if(body.trim()) md+=`\n## ${st.name}\n${body}`;
+    });
+    const miss=[];
+    visStages().forEach(st=>{ if(st.kind==="interview") st.sections.forEach(sec=>visQs(sec).forEach(q=>{if(q.req&&!answered(q))miss.push(`${st.name} › ${q.q}`);})); });
+    if(miss.length) md+=`\n## Still open (required, unanswered)\n\n`+miss.map(m=>`- [ ] ${m}`).join("\n")+"\n";
+    return md;
+  }
+  function slug(s){return (s||"spec").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"").slice(0,40)||"spec";}
+  async function downloadDoc(){
+    const md=buildMarkdown(), name=slug(state.proj)+"-spec.md";
+    if(window.claude&&window.claude.downloads){
+      try{ await window.claude.downloads.save({filename:name,data:md}); toast("Saved as "+name); }
+      catch(err){ if(err&&err.code==="declined") toast("Download cancelled."); else copyMD(md,"Download unavailable — copied to clipboard."); }
+    } else copyMD(md,"Copied to clipboard.");
+  }
+  async function copyMD(md,msg){ md=md||buildMarkdown(); try{await navigator.clipboard.writeText(md);toast(msg||"Copied to clipboard.");}catch(e){toast("Couldn't copy — select the Live spec text.",true);} }
+
+  // ---------- voice ----------
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  let rec=null,recBtn=null;
+  if(!SR) $("#micNote").textContent="voice n/a here";
+  function startVoice(qid,btn,after,noteStage){
+    if(!SR){toast("Voice isn't available here — type instead.",true);return;}
+    if(rec){try{rec.stop();}catch(e){}return;}
+    try{
+      rec=new SR();rec.lang="en-US";rec.interimResults=false;rec.maxAlternatives=1;recBtn=btn;btn.classList.add("rec");
+      rec.onresult=e=>{
+        const t=e.results[0][0].transcript;
+        if(noteStage){const c=state.notes[noteStage]||"";state.notes[noteStage]=c?c.replace(/\s+$/,"")+" "+t:t;}
+        else {const c=state.answers[qid]||"";state.answers[qid]=c?c.replace(/\s+$/,"")+" "+t:t;}
+        save();renderPreview();renderProgress();renderStageBar();if(after)after();else render();
+      };
+      rec.onerror=e=>{toast(e.error==="not-allowed"?"Microphone blocked — allow it or type.":"Voice error — type instead.",true);cleanupVoice();};
+      rec.onend=cleanupVoice;rec.start();
+    }catch(e){toast("Couldn't start voice — type instead.",true);cleanupVoice();}
+  }
+  function cleanupVoice(){if(recBtn)recBtn.classList.remove("rec");recBtn=null;rec=null;}
+
+  function toast(msg,err){const t=$("#toast");t.textContent=msg;t.className="toast show"+(err?" err":"");clearTimeout(toast._t);toast._t=setTimeout(()=>{t.className="toast"+(err?" err":"");},2600);}
+
+  // ---------- top-level ----------
+  function renderBody(){
+    const st=stageById(state.stage);
+    if(st.kind==="interview") renderInterview(st);
+    else if(st.kind==="tasklist") renderTasklist(st);
+    else renderChecklist(st);
+    renderSubstep(st);
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+  function render(){
+    if(!visStages().some(s=>s.id===state.stage)) state.stage=visStages()[0].id; // stage hidden by type change
+    renderPtype(); renderStageBar(); renderBody(); renderPreview(); renderProgress();
+  }
+
+  $("#projName").value=state.proj;
+  $("#projName").addEventListener("input",e=>{state.proj=e.target.value;save();renderPreview();});
+  $("#ptypeSel").addEventListener("change",e=>{state.ptype=e.target.value;save();render();toast("Stages adapted for: "+typeLabel(state.ptype));});
+  $("#stageSel").addEventListener("change",e=>{state.stage=e.target.value;save();render();});
+  $("#dlBtn").onclick=downloadDoc;
+  $("#copyBtn").onclick=()=>copyMD();
+  $("#resetBtn").onclick=()=>{ if(!confirm("Clear everything and start fresh?"))return;
+    state={proj:"",ptype:"website",stage:"prd",sec:{},answers:{},tasks:null,checks:{},notes:{},_tid:1};
+    state.tasks=stageById("building").seed.map(t=>({id:state._tid++,title:t.title,prio:t.prio,done:false}));
+    try{localStorage.removeItem(KEY);}catch(e){} $("#projName").value=""; render(); toast("Started fresh.");
+  };
+
+  render();
+})();
+</script>

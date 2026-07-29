@@ -1,0 +1,360 @@
+<title>Atlas — The Autopilot Knowledge Engine (PRD)</title>
+<style>
+  :root {
+    --paper: #F6F8FA;
+    --surface: #FFFFFF;
+    --surface-2: #EEF2F5;
+    --ink: #10151B;
+    --ink-soft: #3A4552;
+    --ink-faint: #6B7885;
+    --line: #DCE3E9;
+    --accent: #12897A;
+    --accent-deep: #0C5F55;
+    --warn: #C07A1E;
+    --crit: #C4453B;
+    --good: #12897A;
+    --radius: 10px;
+    --maxw: 46rem;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #0D1117; --surface: #151B23; --surface-2: #1C242E;
+      --ink: #E7ECF1; --ink-soft: #B4BFCA; --ink-faint: #7C8A98; --line: #29323D;
+      --accent: #2CC1AC; --accent-deep: #7FE6D6; --warn: #E0A44E; --crit: #E8695E; --good: #2CC1AC;
+    }
+  }
+  :root[data-theme="light"] {
+    --paper: #F6F8FA; --surface: #FFFFFF; --surface-2: #EEF2F5;
+    --ink: #10151B; --ink-soft: #3A4552; --ink-faint: #6B7885; --line: #DCE3E9;
+    --accent: #12897A; --accent-deep: #0C5F55; --warn: #C07A1E; --crit: #C4453B; --good: #12897A;
+  }
+  :root[data-theme="dark"] {
+    --paper: #0D1117; --surface: #151B23; --surface-2: #1C242E;
+    --ink: #E7ECF1; --ink-soft: #B4BFCA; --ink-faint: #7C8A98; --line: #29323D;
+    --accent: #2CC1AC; --accent-deep: #7FE6D6; --warn: #E0A44E; --crit: #E8695E; --good: #2CC1AC;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 1.4rem 5rem; }
+
+  /* hero */
+  .hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--line);
+    background: radial-gradient(120% 80% at 85% -10%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 60%), var(--surface); }
+  .hero-inner { max-width: var(--maxw); margin: 0 auto; padding: 3.4rem 1.4rem 2.6rem; position: relative; z-index: 1; }
+  .contours { position: absolute; inset: 0; z-index: 0; opacity: .5; pointer-events: none; }
+  .eyebrow { font-family: var(--mono); font-size: .72rem; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); margin: 0 0 1rem; display: flex; gap: .6rem; align-items: center; }
+  .eyebrow::before { content: ""; width: 26px; height: 1px; background: var(--accent); display: inline-block; }
+  h1 { font-size: clamp(2.1rem, 6vw, 3.15rem); line-height: 1.02; letter-spacing: -.02em; font-weight: 800; margin: 0 0 .5rem; text-wrap: balance; }
+  .codename { color: var(--accent); }
+  .subhead { font-size: 1.12rem; color: var(--ink-soft); margin: 0; max-width: 35rem; text-wrap: balance; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 1.4rem 2rem; margin-top: 2rem; padding-top: 1.4rem; border-top: 1px solid var(--line); font-family: var(--mono); font-size: .74rem; }
+  .meta-row div { display: flex; flex-direction: column; gap: .25rem; }
+  .meta-row .k { color: var(--ink-faint); letter-spacing: .12em; text-transform: uppercase; font-size: .66rem; }
+  .meta-row .v { color: var(--ink); font-weight: 600; }
+
+  section { padding-top: 2.8rem; }
+  .sec-label { font-family: var(--mono); font-size: .72rem; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin: 0 0 .5rem; }
+  h2 { font-size: 1.55rem; letter-spacing: -.015em; margin: 0 0 .9rem; line-height: 1.15; text-wrap: balance; }
+  h3 { font-size: 1.08rem; margin: 0 0 .4rem; letter-spacing: -.01em; }
+  p { margin: 0 0 1rem; }
+  strong { color: var(--ink); }
+  .lead { font-size: 1.08rem; color: var(--ink-soft); }
+  em.hl { font-style: normal; color: var(--accent-deep); font-weight: 600; }
+
+  .tldr { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius); padding: 1.3rem 1.4rem; margin-top: 1.4rem; }
+  .tldr p:last-child { margin-bottom: 0; }
+
+  .verdict { background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 10%, var(--surface)), var(--surface)); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)); border-radius: var(--radius); padding: 1.5rem; margin-top: 1.2rem; }
+  .verdict .tag { font-family: var(--mono); font-size: .7rem; letter-spacing: .16em; text-transform: uppercase; color: var(--accent-deep); font-weight: 700; }
+  .verdict h3 { font-size: 1.22rem; margin: .5rem 0 .6rem; }
+  .verdict.neutral { background: var(--surface); border-color: var(--line); }
+
+  .miss { display: flex; gap: .8rem; align-items: flex-start; padding: .7rem 0; border-bottom: 1px dashed var(--line); font-size: .96rem; }
+  .miss:last-child { border-bottom: 0; }
+  .miss .ico { flex: none; width: 20px; height: 20px; margin-top: .15rem; border-radius: 5px; background: color-mix(in srgb, var(--crit) 16%, transparent); color: var(--crit); font-family: var(--mono); font-weight: 700; font-size: .7rem; display: grid; place-items: center; }
+
+  /* numbered flow (loops) */
+  .flow { display: flex; flex-direction: column; gap: 0; margin-top: 1.2rem; counter-reset: step; }
+  .fstep { display: grid; grid-template-columns: auto 1fr; gap: 1rem; }
+  .frail { display: flex; flex-direction: column; align-items: center; }
+  .fnum { counter-increment: step; flex: none; width: 1.9rem; height: 1.9rem; border-radius: 8px; background: var(--accent); color: var(--surface); font-family: var(--mono); font-weight: 700; font-size: .82rem; display: grid; place-items: center; }
+  .fnum::before { content: counter(step); }
+  .fstep:not(:last-child) .fline { width: 2px; flex: 1; background: var(--line); margin: .3rem 0; }
+  .fbody { padding-bottom: 1.2rem; }
+  .fbody h4 { margin: .15rem 0 .2rem; font-size: 1rem; }
+  .fbody p { font-size: .93rem; margin: 0; color: var(--ink-soft); }
+  .fbody .cost { display: inline-block; margin-top: .4rem; font-family: var(--mono); font-size: .66rem; letter-spacing: .06em; text-transform: uppercase; padding: .18rem .5rem; border-radius: 100px; border: 1px solid var(--line); color: var(--ink-faint); }
+  .cost.free { color: var(--good); border-color: color-mix(in srgb, var(--good) 45%, var(--line)); background: color-mix(in srgb, var(--good) 9%, transparent); }
+  .cost.pay { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); background: color-mix(in srgb, var(--warn) 9%, transparent); }
+
+  /* two maps cards */
+  .maps { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.2rem; }
+  @media (max-width: 540px) { .maps { grid-template-columns: 1fr; } }
+  .mapcard { border: 1px solid var(--line); border-radius: var(--radius); padding: 1.2rem 1.3rem; background: var(--surface); border-top: 3px solid var(--accent); }
+  .mapcard h4 { margin: 0 0 .5rem; font-size: 1.02rem; }
+  .mapcard p { font-size: .92rem; color: var(--ink-soft); margin: 0 0 .6rem; }
+  .mapcard ul { margin: 0; padding-left: 1.05rem; font-size: .88rem; color: var(--ink-soft); }
+  .mapcard li { margin-bottom: .3rem; }
+
+  /* table */
+  .tablewrap { overflow-x: auto; margin-top: 1.1rem; border: 1px solid var(--line); border-radius: var(--radius); }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { text-align: left; padding: .7rem .9rem; border-bottom: 1px solid var(--line); }
+  th { font-family: var(--mono); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); background: var(--surface-2); }
+  tr:last-child td { border-bottom: 0; }
+  td .pill { font-family: var(--mono); font-size: .7rem; padding: .15rem .5rem; border-radius: 100px; }
+  .pill.free { color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); }
+  .pill.pay { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+
+  ul.clean { margin: .4rem 0 1rem; padding-left: 1.1rem; }
+  ul.clean li { margin-bottom: .5rem; }
+
+  .code { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.2rem; overflow-x: auto; margin-top: 1rem; font-family: var(--mono); font-size: .8rem; line-height: 1.65; color: var(--ink-soft); }
+  .code .key { color: var(--accent-deep); }
+  .code .str { color: var(--ink); }
+  .code .cm { color: var(--ink-faint); font-style: italic; }
+
+  /* revenue ladder */
+  .ladder { display: flex; flex-direction: column; gap: 0; margin-top: 1.2rem; }
+  .rung { display: grid; grid-template-columns: auto 1fr; gap: 1rem; }
+  .rrail { display: flex; flex-direction: column; align-items: center; }
+  .rdot { width: 13px; height: 13px; border-radius: 50%; background: var(--accent); margin-top: .35rem; flex: none; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent); }
+  .rung:not(:last-child) .rline { width: 2px; flex: 1; background: var(--line); margin: .3rem 0; }
+  .rbody { padding-bottom: 1.4rem; }
+  .rbody h4 { margin: 0 0 .15rem; font-size: 1rem; }
+  .rbody .when { font-family: var(--mono); font-size: .68rem; color: var(--accent); letter-spacing: .08em; text-transform: uppercase; }
+  .rbody p { font-size: .93rem; margin: .3rem 0 0; color: var(--ink-soft); }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1.2rem; }
+  @media (max-width: 540px) { .stats { grid-template-columns: 1fr; } }
+  .stat { border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.2rem; background: var(--surface); }
+  .stat .big { font-size: 1.6rem; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .stat .lbl { font-size: .82rem; color: var(--ink-faint); margin-top: .2rem; }
+
+  .risk { display: grid; grid-template-columns: auto 1fr; gap: .8rem; padding: .75rem 0; border-bottom: 1px solid var(--line); }
+  .risk:last-child { border-bottom: 0; }
+  .risk .q { font-family: var(--mono); font-size: .95rem; color: var(--warn); font-weight: 700; }
+  .risk .a { font-size: .93rem; color: var(--ink-soft); }
+  .risk .a b { color: var(--ink); }
+
+  footer { margin-top: 3.5rem; padding-top: 1.4rem; border-top: 1px solid var(--line); font-family: var(--mono); font-size: .72rem; color: var(--ink-faint); }
+</style>
+
+<div class="hero">
+  <svg class="contours" viewBox="0 0 800 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g fill="none" stroke="var(--accent)" stroke-width="1" opacity="0.28">
+      <path d="M-40 210 Q 160 150 340 200 T 720 170 T 900 210"/>
+      <path d="M-40 240 Q 160 185 340 230 T 720 205 T 900 245"/>
+      <path d="M-40 270 Q 160 220 340 260 T 720 240 T 900 278"/>
+      <path d="M-40 180 Q 200 130 360 165 T 760 135 T 900 175"/>
+      <path d="M-40 150 Q 220 110 380 135 T 780 105 T 900 145"/>
+    </g>
+  </svg>
+  <div class="hero-inner">
+    <p class="eyebrow">Product Proposal · v2 · Autopilot</p>
+    <h1><span class="codename">Atlas</span><br>The Autopilot Knowledge Engine</h1>
+    <p class="subhead">A robot that watches everything you run, keeps one living map of your servers and reusable packages, and answers your other build-agents on demand — so every feature is recorded once and reused forever.</p>
+    <div class="meta-row">
+      <div><span class="k">Prepared for</span><span class="v">ODM World</span></div>
+      <div><span class="k">Date</span><span class="v">2026-07-28</span></div>
+      <div><span class="k">Status</span><span class="v">Proposal → MVP</span></div>
+      <div><span class="k">Owner</span><span class="v">Daniel</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <section>
+    <p class="sec-label">Summary</p>
+    <h2>What we're building, in a paragraph</h2>
+    <div class="tldr">
+      <p>You lose time two ways: AI-driven backups and audits <strong>miss things</strong> on your nested servers, and every reusable feature gets <strong>rebuilt from scratch — about five times</strong> — because there's no trusted place that says what "complete" looks like.</p>
+      <p><strong>Atlas is one always-on engine.</strong> A cheap robot watches your servers and code, and whenever something new appears — a site, an app, a package — it catalogs it into one git-based map. Your building agents <em class="hl">query that map before they build anything</em>, so they reuse what exists instead of rebuilding it. It runs on autopilot, reports only exceptions, and the library compounds every time you use it — which is exactly what makes it sellable.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="sec-label">The problem</p>
+    <h2>Two leaks, same root cause</h2>
+    <div class="tldr" style="border-left-color:var(--crit);">
+      <div class="miss"><span class="ico">1</span><div><strong>Discovery misses things.</strong> Nested folders, subdomains, and apps-inside-apps mean the last backup silently skipped at least three live sites.</div></div>
+      <div class="miss"><span class="ico">2</span><div><strong>Reuse fails.</strong> Cloning a package you already built always drops a part — a migration, an env var, a policy page — so you rebuild it again and again.</div></div>
+    </div>
+    <p style="margin-top:1.2rem;">Both come from the same gap: <strong>there is no trusted, always-current source of truth</strong> for what you run and what you've built. Everything is rediscovered live, which is unreliable and burns tokens.</p>
+  </section>
+
+  <section>
+    <p class="sec-label">The shape of it</p>
+    <h2>One engine, two maps</h2>
+    <p>The same discovery engine maps two things — you build the tool once and point it at both.</p>
+    <div class="maps">
+      <div class="mapcard">
+        <h4>🗺️ Server inventory</h4>
+        <p>Every place your sites live, enumerated by script — not guessed.</p>
+        <ul>
+          <li>Domains, subdomains, document roots</li>
+          <li>Nested apps &amp; sub-folder sites</li>
+          <li>Databases, services, cron, SSL expiry</li>
+          <li>Last-backup status per property</li>
+        </ul>
+      </div>
+      <div class="mapcard">
+        <h4>📦 Package catalog</h4>
+        <p>Every reusable thing you've built, with a definition of "complete."</p>
+        <ul>
+          <li>Auth: login, reset, email automation</li>
+          <li>Legal/policy pages (mobile vs. financial variants)</li>
+          <li>SEO package · GEO package</li>
+          <li>A <strong>manifest</strong> — every file it takes to be whole</li>
+        </ul>
+      </div>
+    </div>
+    <p style="margin-top:1.1rem; color:var(--ink-faint); font-size:.92rem;">The catalog <strong>points to your real code where it already lives</strong> — it never copies it. No duplicate repository, no broken links, no second version to keep in sync.</p>
+  </section>
+
+  <section>
+    <p class="sec-label">Autopilot · loop A</p>
+    <h2>The watcher keeps the map fresh — by itself</h2>
+    <p class="lead">You launch it once. After that it runs on a schedule and on triggers, and only talks to you when something's wrong.</p>
+    <div class="flow">
+      <div class="fstep"><div class="frail"><span class="fnum"></span><span class="fline"></span></div><div class="fbody">
+        <h4>Watch</h4><p>Wakes on a timer and on triggers — a git push, a deploy, a new folder. No action from you.</p>
+        <span class="cost free">deterministic · ~free</span>
+      </div></div>
+      <div class="fstep"><div class="frail"><span class="fnum"></span><span class="fline"></span></div><div class="fbody">
+        <h4>Detect change</h4><p>Diffs reality against the map. Nothing new? It stops here and costs almost nothing.</p>
+        <span class="cost free">cheap model · ~free</span>
+      </div></div>
+      <div class="fstep"><div class="frail"><span class="fnum"></span><span class="fline"></span></div><div class="fbody">
+        <h4>Catalog it</h4><p>A new site or package gets mapped and, for packages, its completeness manifest drafted.</p>
+        <span class="cost free">cheap model</span>
+      </div></div>
+      <div class="fstep"><div class="frail"><span class="fnum"></span></div><div class="fbody">
+        <h4>Report exceptions only</h4><p>A short digest: "new subdomain found, not backed up" · "cert expires in 12 days." You review the few things that matter — not the runs.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="sec-label">Autopilot · the interface</p>
+    <h2>How your other agents find it — the "talkative" part</h2>
+    <p>Your build-agents don't need to know where anything is. Atlas exposes the map over <strong>MCP</strong> — the standard channel one agent uses to query another's knowledge. Two things make reuse automatic:</p>
+    <ul class="clean">
+      <li><strong>One standing rule</strong> in every build-agent: <em class="hl">"Before building anything, ask Atlas if we already have it."</em> It becomes a reflex, not a decision.</li>
+      <li><strong>A query channel:</strong> the agent asks <code>atlas.search("login + password reset")</code> and gets back the package, its location, its manifest, and the skill to drop it in — complete. No match? It builds fresh, and the watcher catalogs the result.</li>
+    </ul>
+    <p style="color:var(--ink-faint); font-size:.92rem;">A second, even simpler path: the map's top-level <code>INDEX.md</code> can load as ambient context (like a CLAUDE.md), so lightweight agents get the lay of the land for free.</p>
+  </section>
+
+  <section>
+    <p class="sec-label">Autopilot · loop B</p>
+    <h2>Record once — the reason next time is faster</h2>
+    <p>When a feature is genuinely new, the build cycle captures it so it's never rebuilt from zero again:</p>
+    <div class="flow">
+      <div class="fstep"><div class="frail"><span class="fnum"></span><span class="fline"></span></div><div class="fbody">
+        <h4>Query first</h4><p>Agent asks Atlas. Exists → reuse the skill, done in minutes.</p></div></div>
+      <div class="fstep"><div class="frail"><span class="fnum"></span><span class="fline"></span></div><div class="fbody">
+        <h4>Blueprint (once)</h4><p>If new, it asks the key functionality questions a single time and drafts a spec.</p><span class="cost pay">strong model · pay here</span></div></div>
+      <div class="fstep"><div class="frail"><span class="fnum"></span><span class="fline"></span></div><div class="fbody">
+        <h4>Build</h4><p>Generates the feature against your real stack from the blueprint.</p><span class="cost pay">strong model · pay here</span></div></div>
+      <div class="fstep"><div class="frail"><span class="fnum"></span></div><div class="fbody">
+        <h4>Promote</h4><p>The finished feature becomes a catalogued package + manifest + skill. Next time it's a lookup, not an interrogation.</p></div></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="sec-label">Cost control</p>
+    <h2>Cheap where it's always on; strong only when creating</h2>
+    <p>The engine runs constantly but stays near-free, because the expensive model only wakes when you're actually building something new. Models stay pluggable — swap in whatever's cheapest.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Layer</th><th>How often</th><th>Model tier</th><th>Cost</th></tr></thead>
+        <tbody>
+          <tr><td>Watch &amp; catalog</td><td>constantly</td><td>cheap / fast (Haiku-class)</td><td><span class="pill free">≈ 0</span></td></tr>
+          <tr><td>Answer queries</td><td>on demand</td><td>plain search + cheap model</td><td><span class="pill free">≈ 0</span></td></tr>
+          <tr><td>Blueprint &amp; build</td><td>only when you build</td><td>strong (Opus / Sonnet-class)</td><td><span class="pill pay">pay</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <p class="sec-label">Where it lives</p>
+    <h2>Stored as text, in git — not a database</h2>
+    <p>The whole map is plain, human- and AI-readable files in one private git repo. It's the "better <code>.md</code>" you pictured — with superpowers: diffable history is what makes drift detection possible, and there's no second system to maintain.</p>
+    <div class="code"><span class="cm"># atlas/ — one private repo, the single source of truth</span>
+<span class="key">INDEX.md</span>          <span class="cm"># the map an agent loads first</span>
+<span class="key">inventory/</span>        <span class="cm"># one file per server</span>
+<span class="key">packages/</span>         <span class="cm"># one file per reusable package + manifest</span>
+<span class="key">skills/</span>           <span class="cm"># the "clone this correctly" recipes</span>
+
+<span class="cm"># a package entry — points to source, never copies it</span>
+- <span class="key">id</span>: <span class="str">auth-core</span>
+  <span class="key">source</span>: <span class="str">git@…/shared/auth</span>       <span class="cm"># real code stays put</span>
+  <span class="key">includes</span>: [<span class="str">login, password_reset, email_templates, sessions</span>]
+  <span class="key">requires</span>: [<span class="str">db: users table, env: SMTP_*</span>]   <span class="cm"># the parts that go missing</span>
+  <span class="key">variants</span>: [<span class="str">standard, financial(enhanced-security)</span>]
+  <span class="key">skill</span>: <span class="str">skills/apply-auth-core.md</span></div>
+  </section>
+
+  <section>
+    <p class="sec-label">Recommendation</p>
+    <h2>Is it worth it — and is it actually faster?</h2>
+    <div class="verdict">
+      <span class="tag">Verdict · Yes, after break-even</span>
+      <h3>Build it — but let it earn as it grows, never hoard.</h3>
+      <p>There's a real upfront cost: the engine, plus cataloguing your first packages. After that, manual work is near-zero and every reuse is pure gain. Because you rebuild each feature ~five times today, <strong>break-even comes fast</strong> — a handful of reuses and it's net positive.</p>
+      <p style="margin-bottom:0;">Two disciplines keep it honest: the library grows <strong>only on real demand</strong> (no "huge inventory for nothing," web-scouting is opt-in and approved), and the <strong>promote-step must always run</strong> — which is exactly the job the autopilot takes off your plate.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="sec-label">The money</p>
+    <h2>Who needs it — cheapest to build, first</h2>
+    <div class="ladder">
+      <div class="rung"><div class="rrail"><span class="rdot"></span><span class="rline"></span></div><div class="rbody">
+        <span class="when">Day one · internal</span><h4>Stop leaking margin</h4>
+        <p>Faster, complete builds and zero rebuild-waste = money you keep on every job you already do.</p></div></div>
+      <div class="rung"><div class="rrail"><span class="rdot"></span><span class="rline"></span></div><div class="rbody">
+        <span class="when">Sell now · one-off</span><h4>Infrastructure audit</h4>
+        <p>Run Atlas on a client's servers, hand them a map + gap report ("3 sites unbacked, 2 certs expiring"). Fixed fee. Every business with messy hosting wants this.</p></div></div>
+      <div class="rung"><div class="rrail"><span class="rdot"></span><span class="rline"></span></div><div class="rbody">
+        <span class="when">Best margin · recurring</span><h4>Backup &amp; drift monitoring</h4>
+        <p>The scheduled agent + monthly "all mapped, all safe" digest = retainer revenue at near-zero ongoing cost.</p></div></div>
+      <div class="rung"><div class="rrail"><span class="rdot"></span><span class="rline"></span></div><div class="rbody">
+        <span class="when">Premium · builds</span><h4>Compliant, by default</h4>
+        <p>Ship financial/mobile apps with correct retention &amp; policy pages baked in — in minutes. Clients pay a premium; you spend little.</p></div></div>
+      <div class="rung"><div class="rrail"><span class="rdot"></span></div><div class="rbody">
+        <span class="when">Later · the ceiling</span><h4>License the engine</h4>
+        <p>Other agencies have this exact pain. Productizing Atlas is a real business — but a bigger commitment. Note it; don't start there.</p></div></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="sec-label">Roadmap</p>
+    <h2>What we build, in order</h2>
+    <div class="stats">
+      <div class="stat"><div class="big" style="color:var(--accent)">1</div><div class="lbl"><strong>Discovery scan</strong> — first complete map of servers; see what backups missed today.</div></div>
+      <div class="stat"><div class="big" style="color:var(--accent)">2</div><div class="lbl"><strong>Autopilot watcher</strong> — scheduled, exception-only reports; catalog updates itself.</div></div>
+      <div class="stat"><div class="big" style="color:var(--accent)">3</div><div class="lbl"><strong>MCP query + skills</strong> — build-agents reuse packages; record-once loop live.</div></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="sec-label">Decisions before we build</p>
+    <h2>Four things I need from you</h2>
+    <div class="risk"><span class="q">1</span><span class="a"><b>Server access</b> — plain Linux + SSH, cPanel, Docker, or a mix? Shapes how the scan runs.</span></div>
+    <div class="risk"><span class="q">2</span><span class="a"><b>Where your packages live today</b> — one git host, scattered repos, or on the servers? That's what the catalog will point at.</span></div>
+    <div class="risk"><span class="q">3</span><span class="a"><b>Your build-agents</b> — which tools/agents do you build with, so we wire the "ask Atlas first" rule and MCP into them?</span></div>
+    <div class="risk"><span class="q">4</span><span class="a"><b>Alert channel</b> — email, Slack, or a dashboard for the exception digest?</span></div>
+  </section>
+
+  <footer>
+    ATLAS v2 · The Autopilot Knowledge Engine · Internal proposal · Prepared 2026-07-28
+  </footer>
+
+</div>
