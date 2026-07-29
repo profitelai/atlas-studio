@@ -161,6 +161,7 @@
       <button class="btn ghost small" id="resetBtn">Reset</button>
       <button class="btn small" id="copyBtn">Copy</button>
       <button class="btn small" id="speckitBtn" title="Export as GitHub Spec Kit constitution + spec, ready for /speckit-specify">Spec Kit ⤓</button>
+      <button class="btn small" id="buildkitBtn" title="Export AGENTS.md + tasks.json — agent-ready build kit (Ralph-style loop)">Build kit ⤓</button>
       <button class="btn primary small" id="dlBtn">Download</button>
     </div>
   </div>
@@ -793,6 +794,68 @@ ${buildSpecKitSpec()}`;
     copyMD(bundle,"Spec Kit bundle copied — paste the SPEC block into /speckit-specify.");
   }
 
+  // ---------- Agent build kit (AGENTS.md + tasks.json) ----------
+  // For a generic coding agent / Ralph-style loop: the behaviour contract plus
+  // prioritized stories carrying passes:false until proven done with evidence.
+  function buildTasksJson(){
+    const stories=state.tasks.filter(t=>t.title.trim()).map((t,i)=>({
+      id:"S"+(i+1), title:t.title.trim(), priority:t.prio, passes:false
+    }));
+    const obj={
+      project: state.proj.trim()||"Untitled project",
+      type: typeLabel(state.ptype),
+      success_signal: A("success_signal")||null,
+      done_when: "every story has passes:true, backed by a passing test or diff",
+      stories
+    };
+    return JSON.stringify(obj,null,2);
+  }
+  function buildAgentsMd(){
+    const title=state.proj.trim()||"Untitled project";
+    const rule=(id,verb)=>{ const b=bullets(id); return b.length?b.map(x=>`- ${verb} ${x.replace(/^(MUST NOT|MUST|SHOULD NOT|SHOULD|NEVER|NO|DON'?T)\s+/i,"")}`).join("\n"):`- ${verb} (not set in Atlas Studio → Principles)`; };
+    let md=`# AGENTS.md — ${title}\n<!-- Also works as CLAUDE.md. Behaviour contract for the coding agent. -->\n\n`;
+    md+=`> ${A("one_liner")||"(one-liner not set)"}\n\n`;
+    md+=`**Type**: ${typeLabel(state.ptype)}  ·  **Primary user**: ${A("primary_user")||"—"}\n\n`;
+    md+=`## Principles you MUST follow\n\n${rule("prin_values","MUST")}\n${rule("prin_never","MUST NOT")}\n\n`;
+    md+=`## Quality bar\n\n${rule("prin_quality","MUST meet:")}\n\n`;
+    md+=`## Stack & architecture\n\n`;
+    md+=`- **Stack**: ${A("stack")||A("prin_stack")||"—"}\n`;
+    md+=`- **Architecture**: ${A("architecture")||"—"}\n`;
+    md+=`- **Data**: ${A("data_model")||A("storage")||"—"}\n\n`;
+    md+=`## Working agreement\n\n`;
+    md+=`- Reuse before building — check the catalog / existing packages first.\n`;
+    md+=`- Read \`tasks.json\`. A story is done ONLY with evidence (a passing test or a diff); never set \`passes:true\` otherwise.\n`;
+    if(A("uses_ai")==="Yes") md+=`- Cheap/fast model for routine work; strong model only when building.\n`;
+    md+=`- Clear the launch checklist before shipping; unknowns are "pending", never assumed-green.\n\n`;
+    md+=`## Visual direction\n\n${A("visual_dir")||"—"}\n\n`;
+    md+=`## Definition of done\n\n- ${A("success_signal")||"(measurable success signal not set → MVP stage)"}\n- All launch-checklist gates green.\n`;
+    return md;
+  }
+  function buildAgentBundle(){
+    return `<!-- ATLAS STUDIO → AGENT BUILD KIT -->
+<!-- 1) Save the AGENTS.md block to your repo root (or as CLAUDE.md). -->
+<!-- 2) Save the tasks.json block; run your coding agent in a loop until every story passes. -->
+
+========================= FILE: AGENTS.md =========================
+
+${buildAgentsMd()}
+
+========================= FILE: tasks.json =========================
+
+\`\`\`json
+${buildTasksJson()}
+\`\`\`
+`;
+  }
+  async function exportAgentBundle(){
+    const bundle=buildAgentBundle(), name=slug(state.proj)+"-agent-kit.md";
+    if(window.claude&&window.claude.downloads){
+      try{ await window.claude.downloads.save({filename:name,data:bundle}); toast("Build kit saved as "+name); return; }
+      catch(err){ if(err&&err.code==="declined"){ toast("Export cancelled."); return; } }
+    }
+    copyMD(bundle,"Build kit copied — AGENTS.md + tasks.json inside.");
+  }
+
   // ---------- voice ----------
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   let rec=null,recBtn=null;
@@ -836,6 +899,7 @@ ${buildSpecKitSpec()}`;
   $("#stageSel").addEventListener("change",e=>{state.stage=e.target.value;save();render();});
   $("#dlBtn").onclick=downloadDoc;
   $("#speckitBtn").onclick=exportSpecKit;
+  $("#buildkitBtn").onclick=exportAgentBundle;
   $("#copyBtn").onclick=()=>copyMD();
   $("#resetBtn").onclick=()=>{ if(!confirm("Clear everything and start fresh?"))return;
     state={proj:"",ptype:"website",stage:"prd",sec:{},answers:{},tasks:null,checks:{},notes:{},style:"",_tid:1};
