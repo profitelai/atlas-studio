@@ -12,6 +12,9 @@ open it in any browser (double-click), no server or internet needed.
   builder, synthesized from 6 leading tools (Spec Kit, OpenSpec, Ralph,
   Vibe-Coding Template, Loki Mode, AI Product Dev Toolkit).
 - **atlas-engine-proposal.html** — the original Atlas engine proposal:
+- **atlas-design-library.html** — starter shelf of 6 distinct visual styles (Editorial,
+  Brutalist, Soft Glass, Corporate, Luxury, Playful) with live full-screen previews
+  and copyable design tokens.
   infrastructure inventory + reusable-package catalog + autopilot watcher.
 
 ## Live versions (private to your Claude account)

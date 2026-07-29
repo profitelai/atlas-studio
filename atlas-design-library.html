@@ -1,0 +1,210 @@
+<meta charset="utf-8">
+<title>Atlas Design Library</title>
+<style>
+  :root{
+    --paper:#F4F7F9; --surface:#FFFFFF; --surface-2:#EAEFF3; --sunk:#F7F9FB;
+    --ink:#0F1620; --ink-soft:#3C4854; --ink-faint:#6C7986; --line:#DBE2E8;
+    --accent:#12897A; --accent-deep:#0B5F55;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace; --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --paper:#0C1116; --surface:#141B22; --surface-2:#1B242D; --sunk:#10161C;
+    --ink:#E7ECF1; --ink-soft:#B3BEC9; --ink-faint:#7B8894; --line:#28323C; --accent:#2CC1AC; --accent-deep:#7FE6D6;
+  }}
+  :root[data-theme="light"]{--paper:#F4F7F9;--surface:#FFFFFF;--surface-2:#EAEFF3;--sunk:#F7F9FB;--ink:#0F1620;--ink-soft:#3C4854;--ink-faint:#6C7986;--line:#DBE2E8;--accent:#12897A;--accent-deep:#0B5F55;}
+  :root[data-theme="dark"]{--paper:#0C1116;--surface:#141B22;--surface-2:#1B242D;--sunk:#10161C;--ink:#E7ECF1;--ink-soft:#B3BEC9;--ink-faint:#7B8894;--line:#28323C;--accent:#2CC1AC;--accent-deep:#7FE6D6;}
+
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased;}
+  button{font-family:inherit;cursor:pointer;}
+
+  header{max-width:1180px;margin:0 auto;padding:2.6rem 1.3rem 1rem;}
+  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:0 0 .8rem;display:flex;gap:.6rem;align-items:center;}
+  .eyebrow::before{content:"";width:26px;height:1px;background:var(--accent);}
+  h1{font-size:clamp(1.9rem,5vw,2.7rem);letter-spacing:-.02em;font-weight:800;margin:0 0 .5rem;line-height:1.05;}
+  .sub{color:var(--ink-soft);font-size:1.05rem;max-width:40rem;margin:0;}
+  .hint{margin-top:1rem;font-size:.86rem;color:var(--ink-faint);background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:9px;padding:.7rem .9rem;max-width:44rem;}
+
+  .grid{max-width:1180px;margin:0 auto;padding:1.4rem 1.3rem 4rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.4rem;}
+  .stylecard{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+  .thumb{position:relative;height:280px;overflow:hidden;border-bottom:1px solid var(--line);cursor:pointer;}
+  .thumb .demo{position:absolute;inset:0;height:auto;min-height:100%;}
+  .thumb::after{content:"";position:absolute;inset:0;box-shadow:inset 0 -40px 40px -30px rgba(0,0,0,.12);pointer-events:none;}
+  .thumb .peek{position:absolute;bottom:.6rem;right:.6rem;z-index:2;background:rgba(10,14,20,.82);color:#fff;font-size:.72rem;font-weight:600;padding:.35rem .6rem;border-radius:100px;border:0;backdrop-filter:blur(4px);}
+  .meta{padding:1rem 1.1rem 1.1rem;display:flex;flex-direction:column;gap:.5rem;flex:1;}
+  .meta .row{display:flex;align-items:center;justify-content:space-between;gap:.6rem;}
+  .meta h3{margin:0;font-size:1.08rem;letter-spacing:-.01em;}
+  .swatches{display:flex;gap:.25rem;}
+  .sw{width:16px;height:16px;border-radius:5px;border:1px solid rgba(0,0,0,.08);}
+  .vibe{margin:0;font-size:.88rem;color:var(--ink-soft);}
+  .best{font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;color:var(--ink-faint);text-transform:uppercase;}
+  .meta .actions{display:flex;gap:.5rem;margin-top:.3rem;}
+  .btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:.45rem .7rem;font-size:.8rem;font-weight:600;flex:1;}
+  .btn:hover{border-color:var(--accent);}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(8,12,18,.6);backdrop-filter:blur(3px);z-index:60;display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:2rem 1rem;}
+  .overlay.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--line);border-radius:16px;max-width:960px;width:100%;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.4);}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 1.2rem;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .modal-head h3{margin:0;font-size:1.15rem;}
+  .modal-head .mh-meta{font-size:.85rem;color:var(--ink-faint);}
+  .modal-head .mh-act{display:flex;gap:.5rem;}
+  .modal-demo{padding:1.3rem;background:var(--sunk);}
+  .modal-demo .demo{border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.1);}
+  .tokens{padding:1rem 1.2rem 1.3rem;border-top:1px solid var(--line);}
+  .tokens h4{margin:0 0 .5rem;font-size:.72rem;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);}
+  pre.tok{margin:0;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:.9rem 1rem;overflow-x:auto;font-family:var(--mono);font-size:.78rem;line-height:1.6;color:var(--ink-soft);}
+  .close{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:.4rem .7rem;font-size:.8rem;font-weight:600;}
+
+  .toast{position:fixed;bottom:1.1rem;left:50%;transform:translateX(-50%) translateY(160%);background:var(--ink);color:var(--paper);padding:.65rem 1rem;border-radius:9px;font-size:.85rem;z-index:80;transition:transform .3s ease;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+
+  /* ===== the demo (all sizes in em so it scales with font-size) ===== */
+  .demo{font-family:var(--d-body);background:var(--d-bg);color:var(--d-fg);padding:1.7em;font-size:13px;line-height:1.5;}
+  .demo.big{font-size:16px;}
+  .demo .dnav{display:flex;justify-content:space-between;align-items:center;font-size:.85em;margin-bottom:1.7em;padding-bottom:var(--d-nav-pad,0);border-bottom:var(--d-nav-border,0);}
+  .demo .logo{font-weight:800;letter-spacing:-.01em;}
+  .demo .links{color:var(--d-muted);font-size:.92em;}
+  .demo .eyebrow2{display:inline-block;font-size:.7em;letter-spacing:.18em;text-transform:uppercase;color:var(--d-accent);margin:0 0 .9em;font-weight:700;padding:var(--d-eb-pad,0);border:var(--d-eb-border,0);border-radius:100px;}
+  .demo h2{font-family:var(--d-display);font-size:2.6em;line-height:1.03;margin:0 0 .35em;letter-spacing:var(--d-htrack,-.02em);font-weight:var(--d-hweight,800);}
+  .demo .lede{color:var(--d-muted);font-size:1em;margin:0 0 1.4em;max-width:24em;}
+  .demo .cta{display:flex;gap:.6em;flex-wrap:wrap;margin-bottom:2em;}
+  .demo .bp{background:var(--d-accent);color:var(--d-acc-fg);border:var(--d-btn-border,0);border-radius:var(--d-btn-radius);padding:.72em 1.25em;font-weight:700;font-size:.9em;font-family:inherit;box-shadow:var(--d-btn-shadow,none);}
+  .demo .bg2{background:transparent;color:var(--d-fg);border:1px solid var(--d-line2);border-radius:var(--d-btn-radius);padding:.72em 1.25em;font-weight:600;font-size:.9em;font-family:inherit;}
+  .demo .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:.7em;}
+  .demo .card2{background:var(--d-card);border:1px solid var(--d-line);border-radius:var(--d-radius);padding:.95em;box-shadow:var(--d-card-shadow,none);}
+  .demo .ic{width:1.7em;height:1.7em;border-radius:var(--d-ic-radius,.4em);background:var(--d-accent);margin-bottom:.6em;}
+  .demo .card2 h5{margin:0 0 .2em;font-size:1em;font-family:var(--d-display,inherit);font-weight:700;}
+  .demo .card2 p{margin:0;color:var(--d-muted);font-size:.85em;}
+
+  /* editorial */
+  .s-edit{--d-bg:#FFFFFF;--d-fg:#121212;--d-muted:#585858;--d-accent:#C1272D;--d-acc-fg:#fff;--d-line:#E6E6E6;--d-line2:#121212;--d-card:#fff;--d-display:'Iowan Old Style','Palatino Linotype',Georgia,serif;--d-body:system-ui,sans-serif;--d-radius:2px;--d-btn-radius:2px;--d-nav-pad:.8em;--d-nav-border:2px solid #121212;--d-hweight:800;}
+  .s-edit .card2{border-width:0;border-top:2px solid #121212;border-radius:0;padding-left:0;padding-right:0;}
+  /* brutalist */
+  .s-brut{--d-bg:#F3F3EC;--d-fg:#0A0A0A;--d-muted:#3a3a3a;--d-accent:#2B2BFF;--d-acc-fg:#fff;--d-line:#0A0A0A;--d-line2:#0A0A0A;--d-card:#fff;--d-display:ui-monospace,Menlo,monospace;--d-body:ui-monospace,Menlo,monospace;--d-radius:0;--d-btn-radius:0;--d-btn-border:2px solid #0A0A0A;--d-btn-shadow:3px 3px 0 #0A0A0A;--d-card-shadow:3px 3px 0 #0A0A0A;--d-htrack:-.03em;--d-ic-radius:0;}
+  .s-brut .card2{border-width:2px;}
+  .s-brut .eyebrow2{--d-eb-pad:.25em .6em;--d-eb-border:2px solid #0A0A0A;color:#0A0A0A;}
+  /* glass */
+  .s-glass{--d-bg:linear-gradient(135deg,#E9F6F1,#E6EEF9 60%,#F0EAF7);--d-fg:#17212F;--d-muted:#5a6675;--d-accent:#12A594;--d-acc-fg:#fff;--d-line:rgba(255,255,255,.75);--d-line2:rgba(23,33,47,.18);--d-card:rgba(255,255,255,.5);--d-display:system-ui,sans-serif;--d-body:system-ui,sans-serif;--d-radius:16px;--d-btn-radius:100px;--d-htrack:-.02em;--d-btn-shadow:0 8px 20px rgba(18,165,148,.28);--d-card-shadow:0 8px 24px rgba(30,50,80,.08);--d-ic-radius:50%;}
+  .s-glass .card2{backdrop-filter:blur(8px);}
+  /* corporate */
+  .s-corp{--d-bg:#FFFFFF;--d-fg:#0F1B2D;--d-muted:#5b6675;--d-accent:#1E5EFF;--d-acc-fg:#fff;--d-line:#E4E9F0;--d-line2:#CBD5E4;--d-card:#F7F9FC;--d-display:system-ui,sans-serif;--d-body:system-ui,sans-serif;--d-radius:10px;--d-btn-radius:8px;--d-hweight:800;--d-htrack:-.025em;--d-card-shadow:0 1px 2px rgba(15,27,45,.06);--d-ic-radius:8px;}
+  /* luxury */
+  .s-lux{--d-bg:#131109;--d-fg:#EDE7D8;--d-muted:#9a927f;--d-accent:#C6A15B;--d-acc-fg:#131109;--d-line:#2c2618;--d-line2:#3a3320;--d-card:#1a1710;--d-display:'Iowan Old Style','Palatino Linotype',Georgia,serif;--d-body:system-ui,sans-serif;--d-radius:3px;--d-btn-radius:3px;--d-nav-pad:1em;--d-nav-border:1px solid #2c2618;--d-hweight:500;--d-htrack:-.01em;--d-ic-radius:2px;}
+  .s-lux .eyebrow2{--d-eb-pad:.2em 0;letter-spacing:.28em;}
+  /* playful */
+  .s-play{--d-bg:#FFFCF6;--d-fg:#221833;--d-muted:#6a6076;--d-accent:#7B4DFF;--d-acc2:#FF5C8A;--d-acc3:#F2B33D;--d-acc-fg:#fff;--d-line:#EFE7DA;--d-line2:#E3D9EC;--d-card:#fff;--d-display:system-ui,sans-serif;--d-body:system-ui,sans-serif;--d-radius:20px;--d-btn-radius:100px;--d-hweight:800;--d-htrack:-.02em;--d-btn-shadow:0 8px 0 #5a34d6;--d-card-shadow:0 6px 18px rgba(123,77,255,.12);--d-ic-radius:30% 70% 70% 30%/40% 40% 60% 60%;}
+  .s-play .cards .card2:nth-child(2) .ic{background:var(--d-acc2);}
+  .s-play .cards .card2:nth-child(3) .ic{background:var(--d-acc3);}
+</style>
+
+<header>
+  <p class="eyebrow">Atlas · Design Library</p>
+  <h1>One idea, many looks.</h1>
+  <p class="sub">A starter set of distinct visual styles — each is a real, live-rendered sample you can preview full-screen and hand straight to a build. Stop offering one design; offer a shelf.</p>
+  <p class="hint">Every card renders the <em>same</em> sample content in a different style, so you can compare like-for-like. <strong>Copy tokens</strong> gives you the palette + type + radius to drop into Atlas Studio's <em>visual direction</em> field or straight into a build.</p>
+</header>
+
+<div class="grid" id="grid"></div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  const $=s=>document.querySelector(s);
+
+  const DEMO = `
+    <div class="dnav"><span class="logo">◆ Northwind</span><span class="links">Work · Studio · Contact</span></div>
+    <div class="eyebrow2">New · 2026</div>
+    <h2>Build something people remember.</h2>
+    <p class="lede">A sample landing rendered in this style — swap it for your content and ship.</p>
+    <div class="cta"><button class="bp">Get started</button><button class="bg2">See work</button></div>
+    <div class="cards">
+      <div class="card2"><div class="ic"></div><h5>Fast</h5><p>Ship in days, not months.</p></div>
+      <div class="card2"><div class="ic"></div><h5>Solid</h5><p>Built to hold up.</p></div>
+      <div class="card2"><div class="ic"></div><h5>Yours</h5><p>Fully bespoke.</p></div>
+    </div>`;
+
+  const STYLES=[
+    {id:"edit", cls:"s-edit", name:"Editorial", vibe:"Newspaper poise — big serif headlines, hairline rules, black-and-white with one red.", best:"Agencies · publications · portfolios",
+     sw:["#FFFFFF","#121212","#C1272D"],
+     tok:{"--bg":"#FFFFFF","--fg":"#121212","--muted":"#585858","--accent":"#C1272D","--line":"#E6E6E6","--font-display":"'Iowan Old Style', Georgia, serif","--font-body":"system-ui, sans-serif","--radius":"2px"}},
+    {id:"brut", cls:"s-brut", name:"Brutalist", vibe:"Loud and honest — monospace, hard 2px borders, offset shadows, electric blue.", best:"Dev tools · statements · bold brands",
+     sw:["#F3F3EC","#0A0A0A","#2B2BFF"],
+     tok:{"--bg":"#F3F3EC","--fg":"#0A0A0A","--muted":"#3A3A3A","--accent":"#2B2BFF","--line":"#0A0A0A","--font-display":"ui-monospace, Menlo, monospace","--font-body":"ui-monospace, Menlo, monospace","--radius":"0","--shadow":"3px 3px 0 #0A0A0A"}},
+    {id:"glass", cls:"s-glass", name:"Soft Glass", vibe:"Calm and modern — mint-to-lilac gradient, frosted cards, pill buttons, teal accent.", best:"SaaS · wellness · consumer apps",
+     sw:["#E9F6F1","#12A594","#7B4DFF"],
+     tok:{"--bg":"linear-gradient(135deg,#E9F6F1,#E6EEF9,#F0EAF7)","--fg":"#17212F","--muted":"#5A6675","--accent":"#12A594","--card":"rgba(255,255,255,.5) + blur(8px)","--radius":"16px","--btn-radius":"100px","--font":"system-ui, sans-serif"}},
+    {id:"corp", cls:"s-corp", name:"Corporate Trust", vibe:"Dependable and clean — crisp white, navy ink, confident blue, soft shadows.", best:"B2B · finance · professional services",
+     sw:["#FFFFFF","#0F1B2D","#1E5EFF"],
+     tok:{"--bg":"#FFFFFF","--fg":"#0F1B2D","--muted":"#5B6675","--accent":"#1E5EFF","--line":"#E4E9F0","--card":"#F7F9FC","--font":"system-ui, sans-serif","--radius":"10px"}},
+    {id:"lux", cls:"s-lux", name:"Luxury Dark", vibe:"Quiet expense — warm near-black, champagne gold, light serif, generous space.", best:"Premium brands · hospitality · real estate",
+     sw:["#131109","#C6A15B","#EDE7D8"],
+     tok:{"--bg":"#131109","--fg":"#EDE7D8","--muted":"#9A927F","--accent":"#C6A15B","--line":"#2C2618","--card":"#1A1710","--font-display":"'Iowan Old Style', Georgia, serif","--font-body":"system-ui, sans-serif","--radius":"3px"}},
+    {id:"play", cls:"s-play", name:"Playful Vibrant", vibe:"Friendly and fun — cream ground, purple/pink/amber, chunky rounded buttons.", best:"Consumer · community · kids & lifestyle",
+     sw:["#7B4DFF","#FF5C8A","#F2B33D"],
+     tok:{"--bg":"#FFFCF6","--fg":"#221833","--muted":"#6A6076","--accent":"#7B4DFF","--accent-2":"#FF5C8A","--accent-3":"#F2B33D","--line":"#EFE7DA","--radius":"20px","--btn-radius":"100px","--font":"system-ui, sans-serif"}},
+  ];
+
+  function tokensText(s){
+    let out=":root{\n";
+    for(const k in s.tok) out+=`  ${k}: ${s.tok[k]};\n`;
+    out+="}";
+    return out;
+  }
+
+  function renderGrid(){
+    $("#grid").innerHTML=STYLES.map(s=>
+      `<div class="stylecard">
+        <div class="thumb" data-open="${s.id}">
+          <div class="demo ${s.cls}">${DEMO}</div>
+          <button class="peek">⤢ Preview</button>
+        </div>
+        <div class="meta">
+          <div class="row"><h3>${s.name}</h3><div class="swatches">${s.sw.map(c=>`<span class="sw" style="background:${c}"></span>`).join("")}</div></div>
+          <p class="vibe">${s.vibe}</p>
+          <div class="best">${s.best}</div>
+          <div class="actions">
+            <button class="btn" data-open="${s.id}">Preview full</button>
+            <button class="btn primary" data-copy="${s.id}">Copy tokens</button>
+          </div>
+        </div>
+      </div>`).join("");
+    $("#grid").querySelectorAll("[data-open]").forEach(el=>el.onclick=()=>openModal(el.dataset.open));
+    $("#grid").querySelectorAll("[data-copy]").forEach(el=>el.onclick=e=>{e.stopPropagation();copyTokens(el.dataset.copy);});
+  }
+
+  function openModal(id){
+    const s=STYLES.find(x=>x.id===id);
+    $("#modal").innerHTML=
+      `<div class="modal-head">
+        <div><h3>${s.name}</h3><div class="mh-meta">${s.best}</div></div>
+        <div class="mh-act"><button class="btn primary" data-copy2="${s.id}" style="flex:none">Copy tokens</button><button class="close" id="closeM">Close ✕</button></div>
+      </div>
+      <div class="modal-demo"><div class="demo big ${s.cls}">${DEMO}</div></div>
+      <div class="tokens"><h4>Design tokens</h4><pre class="tok">${tokensText(s).replace(/</g,"&lt;")}</pre></div>`;
+    $("#overlay").classList.add("open");
+    $("#closeM").onclick=closeModal;
+    $("#modal").querySelector("[data-copy2]").onclick=()=>copyTokens(s.id);
+  }
+  function closeModal(){ $("#overlay").classList.remove("open"); }
+  $("#overlay").onclick=e=>{ if(e.target===$("#overlay")) closeModal(); };
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
+
+  async function copyTokens(id){
+    const s=STYLES.find(x=>x.id===id);
+    try{ await navigator.clipboard.writeText(tokensText(s)); toast(s.name+" tokens copied"); }
+    catch(e){ toast("Couldn't copy — open Preview and select the tokens.",true); }
+  }
+  function toast(m,err){const t=$("#toast");t.textContent=m;t.className="toast show"+(err?" err":"");clearTimeout(toast._t);toast._t=setTimeout(()=>t.className="toast",2400);}
+
+  renderGrid();
+})();
+</script>
