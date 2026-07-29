@@ -1,0 +1,144 @@
+<meta charset="utf-8">
+<title>Atlas — Status & Roadmap</title>
+<style>
+  :root{
+    --paper:#F5F8FA;--surface:#FFFFFF;--surface-2:#EAEFF3;--sunk:#F7F9FB;
+    --ink:#0F1620;--ink-soft:#3B4753;--ink-faint:#6B7784;--line:#DAE1E7;
+    --accent:#12897A;--accent-deep:#0B5F55;--accent-soft:#E2F0ED;
+    --warn:#C07A1E;--good:#12897A;--next:#1E5EFF;
+    --radius:11px;--maxw:47rem;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --paper:#0C1116;--surface:#141B22;--surface-2:#1B242D;--sunk:#10161C;
+    --ink:#E7ECF1;--ink-soft:#B3BEC9;--ink-faint:#7B8894;--line:#28323C;
+    --accent:#2CC1AC;--accent-deep:#7FE6D6;--accent-soft:#12312D;--warn:#E0A44E;--good:#2CC1AC;--next:#5B8CFF;
+  }}
+  :root[data-theme="light"]{--paper:#F5F8FA;--surface:#FFFFFF;--surface-2:#EAEFF3;--sunk:#F7F9FB;--ink:#0F1620;--ink-soft:#3B4753;--ink-faint:#6B7784;--line:#DAE1E7;--accent:#12897A;--accent-deep:#0B5F55;--accent-soft:#E2F0ED;--warn:#C07A1E;--good:#12897A;--next:#1E5EFF;}
+  :root[data-theme="dark"]{--paper:#0C1116;--surface:#141B22;--surface-2:#1B242D;--sunk:#10161C;--ink:#E7ECF1;--ink-soft:#B3BEC9;--ink-faint:#7B8894;--line:#28323C;--accent:#2CC1AC;--accent-deep:#7FE6D6;--accent-soft:#12312D;--warn:#E0A44E;--good:#2CC1AC;--next:#5B8CFF;}
+
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 1.4rem 4.5rem;}
+
+  .hero{border-bottom:1px solid var(--line);background:radial-gradient(120% 80% at 85% -10%,color-mix(in srgb,var(--accent) 12%,transparent),transparent 60%),var(--surface);}
+  .hero-in{max-width:var(--maxw);margin:0 auto;padding:3rem 1.4rem 2.2rem;}
+  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:0 0 .9rem;display:flex;gap:.6rem;align-items:center;}
+  .eyebrow::before{content:"";width:26px;height:1px;background:var(--accent);}
+  h1{font-size:clamp(2rem,5.5vw,2.9rem);letter-spacing:-.02em;font-weight:800;margin:0 0 .5rem;line-height:1.04;}
+  .sub{color:var(--ink-soft);font-size:1.08rem;max-width:34rem;margin:0;}
+  .meta{display:flex;flex-wrap:wrap;gap:1.2rem 2rem;margin-top:1.8rem;padding-top:1.2rem;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;}
+  .meta div{display:flex;flex-direction:column;gap:.25rem;}
+  .meta .k{color:var(--ink-faint);letter-spacing:.1em;text-transform:uppercase;font-size:.62rem;}
+  .meta .v{color:var(--ink);font-weight:600;}
+
+  section{padding-top:2.6rem;}
+  .lbl{font-family:var(--mono);font-size:.71rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin:0 0 .5rem;}
+  h2{font-size:1.45rem;letter-spacing:-.015em;margin:0 0 .9rem;line-height:1.15;}
+  p{margin:0 0 1rem;}strong{color:var(--ink);}
+
+  .done{display:flex;flex-direction:column;gap:.55rem;margin-top:1rem;}
+  .item{display:flex;gap:.75rem;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.75rem .9rem;}
+  .item .tick{flex:none;width:1.35rem;height:1.35rem;border-radius:6px;background:var(--good);color:#fff;display:grid;place-items:center;font-size:.8rem;font-weight:700;margin-top:.05rem;}
+  .item.next .tick{background:var(--next);}
+  .item .b{font-weight:600;font-size:.96rem;}
+  .item .d{color:var(--ink-soft);font-size:.87rem;margin-top:.1rem;}
+  .item .link{font-family:var(--mono);font-size:.72rem;color:var(--accent);text-decoration:none;}
+  .item .link:hover{text-decoration:underline;}
+
+  /* flow */
+  .flow{margin-top:1.1rem;border:1px solid var(--line);border-radius:var(--radius);background:var(--sunk);padding:1.1rem 1.2rem;overflow-x:auto;}
+  .flowline{display:flex;align-items:center;gap:.5rem;min-width:max-content;font-size:.82rem;}
+  .node{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:.5rem .7rem;font-weight:600;white-space:nowrap;}
+  .node.acc{border-color:var(--accent);background:var(--accent-soft);color:var(--ink);}
+  .arw{color:var(--ink-faint);font-family:var(--mono);}
+  .flowcap{font-size:.82rem;color:var(--ink-faint);margin-top:.7rem;}
+
+  /* phases */
+  .phase{display:grid;grid-template-columns:auto 1fr;gap:1rem;}
+  .prail{display:flex;flex-direction:column;align-items:center;}
+  .pdot{width:1.7rem;height:1.7rem;border-radius:8px;font-family:var(--mono);font-weight:700;font-size:.78rem;display:grid;place-items:center;flex:none;background:var(--good);color:#fff;}
+  .phase.now .pdot{background:var(--next);box-shadow:0 0 0 4px color-mix(in srgb,var(--next) 20%,transparent);}
+  .phase.todo .pdot{background:var(--surface-2);color:var(--ink-faint);border:1px solid var(--line);}
+  .phase:not(:last-child) .pline{width:2px;flex:1;background:var(--line);margin:.3rem 0;}
+  .pbody{padding-bottom:1.3rem;}
+  .pbody h4{margin:.1rem 0 .2rem;font-size:1.02rem;}
+  .pbody .tagp{font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;padding:.15rem .5rem;border-radius:100px;margin-left:.5rem;vertical-align:middle;}
+  .tagp.done{color:var(--good);border:1px solid color-mix(in srgb,var(--good) 45%,var(--line));background:color-mix(in srgb,var(--good) 10%,transparent);}
+  .tagp.now{color:var(--next);border:1px solid color-mix(in srgb,var(--next) 45%,var(--line));background:color-mix(in srgb,var(--next) 10%,transparent);}
+  .tagp.todo{color:var(--ink-faint);border:1px solid var(--line);}
+  .pbody p{margin:.2rem 0 0;font-size:.92rem;color:var(--ink-soft);}
+
+  .cta{background:linear-gradient(180deg,color-mix(in srgb,var(--next) 12%,var(--surface)),var(--surface));border:1px solid color-mix(in srgb,var(--next) 35%,var(--line));border-radius:var(--radius);padding:1.4rem;margin-top:1.2rem;}
+  .cta .tag{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--next);font-weight:700;}
+  .cta h3{margin:.4rem 0 .5rem;font-size:1.2rem;}
+  .cta p{margin:0;color:var(--ink-soft);font-size:.95rem;}
+
+  footer{margin-top:3rem;padding-top:1.2rem;border-top:1px solid var(--line);font-family:var(--mono);font-size:.71rem;color:var(--ink-faint);}
+</style>
+
+<div class="hero"><div class="hero-in">
+  <p class="eyebrow">Atlas · Status &amp; Roadmap</p>
+  <h1>Where we stand, and the plan.</h1>
+  <p class="sub">One living map of the whole effort — what's built and shipped, how the pieces connect, and the phases still ahead.</p>
+  <div class="meta">
+    <div><span class="k">Updated</span><span class="v">2026-07-28</span></div>
+    <div><span class="k">Repo</span><span class="v">profitelai/atlas-studio</span></div>
+    <div><span class="k">Phase</span><span class="v">1 done · 2 next</span></div>
+  </div>
+</div></div>
+
+<div class="wrap">
+
+  <section>
+    <p class="lbl">Where we stand</p>
+    <h2>Built, tested &amp; shipped</h2>
+    <div class="done">
+      <div class="item"><span class="tick">✓</span><div><div class="b">Atlas engine proposal</div><div class="d">The vision: infrastructure inventory + reusable-package catalog + autopilot watcher.</div></div></div>
+      <div class="item"><span class="tick">✓</span><div><div class="b">Full requirements (meta-PRD)</div><div class="d">Synthesized from 6 leading tools; design-first, MVP-gated lifecycle; agent-ready output.</div></div></div>
+      <div class="item"><span class="tick">✓</span><div><div class="b">Atlas Studio — the builder</div><div class="d">One screen, 8–9 stages, adapts to project type (web / mobile / API), voice input, live spec, Markdown export. Verified in-browser.</div></div></div>
+      <div class="item"><span class="tick">✓</span><div><div class="b">Design Library — 6 styles</div><div class="d">Editorial · Brutalist · Soft Glass · Corporate · Luxury · Playful. Live full-screen previews + copyable tokens.</div></div></div>
+      <div class="item"><span class="tick">✓</span><div><div class="b">Library wired into the builder</div><div class="d">Pick a style in the UX stage → it seeds the visual direction in the exported spec. The two are one system.</div></div></div>
+      <div class="item"><span class="tick">✓</span><div><div class="b">Public repo, version-controlled</div><div class="d">4 commits, main synced. <a class="link" href="https://github.com/profitelai/atlas-studio">github.com/profitelai/atlas-studio</a></div></div></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="lbl">How it connects</p>
+    <h2>The system, end to end</h2>
+    <div class="flow"><div class="flowline">
+      <span class="node">Idea</span><span class="arw">→</span>
+      <span class="node acc">Atlas Studio</span><span class="arw">→</span>
+      <span class="node acc">Design Library</span><span class="arw">→</span>
+      <span class="node">Spec bundle</span><span class="arw">→</span>
+      <span class="node">Spec Kit + Ralph</span><span class="arw">→</span>
+      <span class="node">Atlas engine</span>
+    </div>
+    <p class="flowcap">Capture &amp; design (ours) → build (reused engines) → watch, benchmark &amp; catalog (Atlas). Nothing floats; each hand-off is a real file.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="lbl">The plan</p>
+    <h2>Phases</h2>
+    <div>
+      <div class="phase now"><div class="prail"><span class="pdot">1</span><span class="pline"></span></div><div class="pbody"><h4>Capture &amp; design layer <span class="tagp done">Mostly done</span></h4><p>The builder + Design Library. Working today. Remaining polish: grow the style set, tune question depth.</p></div></div>
+      <div class="phase now"><div class="prail"><span class="pdot">2</span><span class="pline"></span></div><div class="pbody"><h4>Agent-ready output <span class="tagp now">Next</span></h4><p>Export not just a spec but a build package — <strong>tasks.json + AGENTS.md/CLAUDE.md + review checklist</strong>, formatted to drop into Spec Kit's <code>/speckit.specify</code>. This is what makes the next app build fast.</p></div></div>
+      <div class="phase todo"><div class="prail"><span class="pdot">3</span><span class="pline"></span></div><div class="pbody"><h4>Reuse the build engines <span class="tagp todo">Then</span></h4><p>Adopt Spec Kit + Ralph inside Claude Code to generate and loop the actual code — we don't rebuild the builder.</p></div></div>
+      <div class="phase todo"><div class="prail"><span class="pdot">4</span><span class="pline"></span></div><div class="pbody"><h4>Atlas engine — real servers <span class="tagp todo">Then</span></h4><p>The first discovery scan that maps one of your live servers: domains, subdomains, nested apps, backups. Solves the original "missed sites" problem.</p></div></div>
+      <div class="phase todo"><div class="prail"><span class="pdot">5</span></div><div class="pbody"><h4>Enhancement engine <span class="tagp todo">Later</span></h4><p>Benchmark each site vs. competitors, hunt revenue/funnel gaps, email you sourced recommendations. The "become the best" pillar.</p></div></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="lbl">Next action</p>
+    <h2>What I'd build next</h2>
+    <div class="cta">
+      <span class="tag">Phase 2 · recommended</span>
+      <h3>The agent-ready bundle export</h3>
+      <p>Add an "Export for build" that turns a finished spec into <code>tasks.json</code> + <code>AGENTS.md</code> + a Spec-Kit-ready spec — so a coding agent starts building immediately, with zero re-explaining. It's the highest-leverage step toward "spec once, build fast."</p>
+    </div>
+  </section>
+
+  <footer>ATLAS · Status &amp; Roadmap · profitelai/atlas-studio · 2026-07-28</footer>
+</div>
