@@ -122,27 +122,51 @@
 
   // ---- text-to-speech: Atlas talks its questions aloud (browser-native, no key) ----
   const synth = window.speechSynthesis;
-  let voiceOn = !!synth;
+  let voiceOn = true;        // on by default; falls back to browser speech if no server TTS
   let handsFree = false;
-  if(!synth){ const b=$('#voiceBtn'); if(b) b.style.display='none'; }
+  let serverTTS = false;     // set from /api/health — true when a natural OpenAI voice is available
+  let curAudio = null;
+
   function pickVoice(){
     if(!synth) return null;
     const vs = synth.getVoices();
     return vs.find(v=>/^en/i.test(v.lang) && /(samantha|jenny|aria|zira|google.*english|female)/i.test(v.name))
         || vs.find(v=>/^en/i.test(v.lang)) || vs[0] || null;
   }
-  function speak(text){
-    if(!voiceOn || !synth || !text) return;
+  function afterSpeech(){ if(handsFree && !busy) startListen(true); }
+  function browserSpeak(text){
+    if(!synth){ afterSpeech(); return; }
     try{
       synth.cancel();
       const u = new SpeechSynthesisUtterance(text);
       const v = pickVoice(); if(v) u.voice = v;
       u.rate = 1.03; u.pitch = 1;
-      u.onend = () => { if (handsFree && !busy) startListen(true); };
+      u.onend = afterSpeech;
       synth.speak(u);
-    }catch(e){}
+    }catch(e){ afterSpeech(); }
   }
-  function stopSpeak(){ if(synth){ try{ synth.cancel(); }catch(e){} } }
+  function speak(text){
+    if(!voiceOn || !text) return;
+    stopSpeak();
+    if(serverTTS){
+      fetch('/api/tts', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text})})
+        .then(r => { if(!r.ok || r.status===204) throw new Error('no-tts'); return r.blob(); })
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = new Audio(url); curAudio = a;
+          a.onended = () => { URL.revokeObjectURL(url); curAudio=null; afterSpeech(); };
+          a.onerror = () => { curAudio=null; browserSpeak(text); };
+          a.play().catch(() => { curAudio=null; browserSpeak(text); });
+        })
+        .catch(() => browserSpeak(text));
+    } else {
+      browserSpeak(text);
+    }
+  }
+  function stopSpeak(){
+    if(synth){ try{ synth.cancel(); }catch(e){} }
+    if(curAudio){ try{ curAudio.pause(); }catch(e){} curAudio=null; }
+  }
   if(synth && synth.onvoiceschanged === null){ synth.onvoiceschanged = ()=>{}; }
   $('#voiceBtn').onclick = ()=>{
     voiceOn = !voiceOn;
@@ -155,8 +179,10 @@
   // ---- health ----
   fetch('/api/health').then(r=>r.json()).then(h=>{
     const el = $('#status'), t = $('#statusText');
-    if(h.keyPresent){ el.className='status ok'; t.textContent = h.model+' · key ✓'; }
-    else { el.className='status ok'; t.textContent = h.model+' · using CLI profile'; }
+    serverTTS = !!h.ttsServer;
+    const voice = serverTTS ? ' · natural voice' : '';
+    el.className = 'status ok';
+    t.textContent = (h.keyPresent ? h.model + ' · key ✓' : h.model + ' · CLI profile') + voice;
   }).catch(()=>{ $('#status').className='status bad'; $('#statusText').textContent='server offline'; });
 
   // ---- chat rendering ----

@@ -63,8 +63,38 @@ const app = express();
 app.use(express.json({ limit: '2mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Natural voice via OpenAI TTS is available only when using OpenAI (Anthropic
+// has no TTS API). Turn it off with ATLAS_TTS=off to save cost / use browser voice.
+const TTS_SERVER = PROVIDER === 'openai' && process.env.ATLAS_TTS !== 'off';
+
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, provider: PROVIDER, model: MODEL, keyPresent: PROVIDER === 'openai' ? HAS_OPENAI : HAS_ANTHROPIC });
+  res.json({
+    ok: true,
+    provider: PROVIDER,
+    model: MODEL,
+    keyPresent: PROVIDER === 'openai' ? HAS_OPENAI : HAS_ANTHROPIC,
+    ttsServer: TTS_SERVER,
+  });
+});
+
+// Text -> speech (OpenAI). Returns MP3, or 204 so the browser falls back to its
+// built-in speech synthesis.
+app.post('/api/tts', async (req, res) => {
+  const text = (req.body?.text || '').trim();
+  if (!text) return res.status(400).end();
+  if (!TTS_SERVER) return res.status(204).end();
+  try {
+    const speech = await getOpenAI().audio.speech.create({
+      model: process.env.OPENAI_TTS_MODEL || 'tts-1',
+      voice: process.env.OPENAI_TTS_VOICE || 'nova',
+      input: text.slice(0, 4000),
+    });
+    const buf = Buffer.from(await speech.arrayBuffer());
+    res.set('Content-Type', 'audio/mpeg').set('Cache-Control', 'no-store').send(buf);
+  } catch (err) {
+    console.error(`[api/tts] ${err?.status || ''} ${err?.message || err}`);
+    res.status(204).end(); // browser will fall back to its own voice
+  }
 });
 
 app.post('/api/chat', async (req, res) => {
