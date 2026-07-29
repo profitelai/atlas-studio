@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Atlas pre-commit gate: no catalogued package may be committed incomplete.
+# Enable once per clone:  git config core.hooksPath .githooks
+root="$(git rev-parse --show-toplevel)"
+runner="$root/atlas/bin/verify-all.sh"
+[ -x "$runner" ] || { chmod +x "$runner" 2>/dev/null; }
+if [ -f "$runner" ]; then
+  echo "· atlas: verifying catalogued packages…"
+  if ! bash "$runner"; then
+    echo "✗ commit blocked: a catalogued package is incomplete (see above)."
+    echo "  Fix the missing parts, or bypass with 'git commit --no-verify' if intentional."
+    exit 1
+  fi
+fi
+exit 0

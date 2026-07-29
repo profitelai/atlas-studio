@@ -36,8 +36,12 @@ step — the verify step is what stops the "rebuilt it and missed a part" cycle.
 4. **Match the theme.** If the host site sets `data-theme`, the tokens already follow it.
    Otherwise override the `:root` brand vars (`--brand`, `--brand-ink`) to the site's palette.
 
-5. **Verify against the completeness manifest** in [packages/lead-capture.md](../packages/lead-capture.md).
-   Tick every box. Then run the two acceptance checks in a browser:
+5. **Verify against the completeness manifest — this is a hard gate.** Run:
+   ```bash
+   atlas/bin/verify-package.sh atlas/packages/lead-capture.md <your-clone-file>
+   ```
+   It must print `COMPLETE ✓` (exit 0). If it lists missing checks, the clone is
+   NOT done — fix each before shipping. Then run the two acceptance checks in a browser:
    - Submit a **valid** name+email → success state shows, `onLead` fires with the payload.
    - Submit an **invalid** email → inline error, submit blocked.
 
